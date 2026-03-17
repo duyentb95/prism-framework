@@ -27,3 +27,24 @@
 - **Alternatives**: Pre-load all (120K+ tokens wasted), no gstack (lose cognitive modes)
 - **Reasoning**: 84% token reduction. Peak ~22K vs 135K+ naive approach.
 - **Consequences**: gstack-bridge must maintain accurate command → path mapping. Preamble runs once per session.
+
+## 2026-03-17 — JSON persistence alongside Markdown reports
+- **Context**: gstack uses JSON snapshots for /qa and /retro. PRISM used Markdown only. Gap in machine-queryable data.
+- **Decision**: Add JSON snapshot output to qa-engineer, sprint-retro, and design-auditor alongside Markdown reports.
+- **Alternatives**: JSON only (loses human readability), Markdown only (not machine-queryable), database (over-engineering)
+- **Reasoning**: Dual output. Markdown for humans, JSON for trend analysis, CI gates, and cross-sprint comparison.
+- **Consequences**: Skills that produce reports must output both .md and .json. JSON schema is documented in SKILL.md.
+
+## 2026-03-17 — Session detection via 45-minute gap heuristic
+- **Context**: Sprint retro lacked visibility into work patterns (session length, time of day, fragmentation).
+- **Decision**: Add session detection to sprint-retro using 45-min gap between commits as session boundary.
+- **Alternatives**: 30-min gap (too aggressive, splits focused work), 60-min gap (misses lunch breaks), manual tracking (friction)
+- **Reasoning**: 45 minutes is a commonly-used threshold in productivity research for session boundaries. Matches Pomodoro-extended flows.
+- **Consequences**: Requires 5+ commits per sprint for meaningful analysis. Included in both Markdown and JSON output.
+
+## 2026-03-17 — Design auditor as PRISM-native skill
+- **Context**: gstack had 80-item design audit + AI slop detection. PRISM had no design review capability.
+- **Decision**: Create design-auditor skill with 80-item checklist (5 sections) + AI slop detection + JSON persistence.
+- **Alternatives**: Rely solely on gstack /qa-design-review (requires gstack), skip design audit entirely (gap remains)
+- **Reasoning**: Design quality is critical for web projects. Having a PRISM-native option means the audit works even without gstack installed. gstack delegation still available for browser-based visual testing.
+- **Consequences**: New skill added to framework. Setup script updated to include in status/uninstall. Total skills: 11.
