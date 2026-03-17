@@ -86,7 +86,10 @@ install_global() {
         log_ok "$skill_name"
     done
 
-    if [ -d "$FRAMEWORK_DIR/commands" ]; then
+    if [ -d "$FRAMEWORK_DIR/.claude/commands" ]; then
+        cp "$FRAMEWORK_DIR/.claude/commands"/*.md "$GLOBAL_COMMANDS/" 2>/dev/null || true
+        log_ok "PRISM commands ($(ls "$FRAMEWORK_DIR/.claude/commands"/*.md 2>/dev/null | wc -l | tr -d ' ') slash commands)"
+    elif [ -d "$FRAMEWORK_DIR/commands" ]; then
         cp "$FRAMEWORK_DIR/commands"/*.md "$GLOBAL_COMMANDS/" 2>/dev/null || true
         log_ok "PRISM commands"
     fi
@@ -157,10 +160,17 @@ setup_project() {
     done
     log_ok ".prism/ structure"
 
-    # .claude/settings.json
-    mkdir -p "$P/.claude"
+    # .claude/settings.json + commands
+    mkdir -p "$P/.claude/commands"
     [ ! -f "$P/.claude/settings.json" ] && cp "$FRAMEWORK_DIR/.claude/settings.json" "$P/.claude/settings.json"
     log_ok ".claude/settings.json"
+
+    # Slash commands
+    if [ -d "$FRAMEWORK_DIR/.claude/commands" ]; then
+        cp "$FRAMEWORK_DIR/.claude/commands"/*.md "$P/.claude/commands/" 2>/dev/null || true
+        local cmd_count=$(ls "$P/.claude/commands"/*.md 2>/dev/null | wc -l | tr -d ' ')
+        log_ok ".claude/commands/ ($cmd_count slash commands)"
+    fi
 
     # Vendor gstack into project?
     echo ""
