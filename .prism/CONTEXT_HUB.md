@@ -1,64 +1,58 @@
 # CONTEXT HUB — Shared Project Context
 
-> File này là "Single Source of Truth" cho toàn bộ agents.
-> Master-Agent cập nhật. Sub-agents chỉ đọc.
+> Single Source of Truth for all agents.
+> Master-Agent updates. Sub-agents read only.
 
-## WHY — Tại sao dự án này tồn tại
+## WHY — Why this project exists
 
-```
-[Mô tả mục tiêu cuối cùng. Ví dụ:]
-Build hệ thống tự động trading theo chiến lược momentum breakout trên Hyperliquid,
-để giảm thiểu can thiệp thủ công và tăng consistency trong execution.
-```
+PRISM is an open-source AI Agent Orchestration Framework for Claude Code.
+It turns Claude from a single "AI coder" into a multi-role "AI Team Manager" with
+structured planning, parallel sub-agent execution, knowledge persistence, and
+cognitive mode switching (via gstack integration).
 
-## WHO — Ai là người nhận output
+Goal: help developers get 2-3x more output from Claude Code with better quality,
+less token waste, and no context loss between sessions.
 
-```
-[Ai sẽ dùng output này? Ví dụ:]
-- Primary: Trader/Developer (bản thân mình) — cần code chạy được, dễ maintain
-- Secondary: Team members — cần docs rõ ràng để onboard nhanh
-- Stakeholders: — (nếu có)
-```
+## WHO — Who receives the output
 
-## STANDARDS — Tiêu chuẩn output
+- **Primary**: Developers using Claude Code daily — need a plug-and-play framework
+- **Secondary**: Teams sharing AI context via git — need `.prism/` to be portable
+- **Community**: Open-source users — need clear docs, easy setup, professional quality
+
+## STANDARDS — Output standards
 
 ### Code Standards
-```
-- Language: [Python 3.12+ / TypeScript / ...]
-- Style: [PEP8 / ESLint / ...]
-- Type hints: Required
-- Testing: Unit tests cho mọi logic module
-- Logging: Structured JSON (structlog / pino)
-- Error handling: Custom exceptions, never swallow errors
-```
+- Language: Bash (setup script), Markdown (SKILL.md files, docs)
+- Style: gstack-compatible SKILL.md format (frontmatter + Preamble + AskUserQuestion + Steps)
+- Testing: Manual QA via Claude Code sessions
+- Naming: kebab-case for directories, UPPER_SNAKE for .prism/ files
 
 ### Document Standards
-```
-- Language: Tiếng Việt cho internal docs, English cho code comments
-- Format: Markdown
-- Naming: kebab-case cho files, UPPER_SNAKE cho constants
-- Timestamps: UTC+7 cho display, epoch ms cho data
-```
+- Language: Bilingual — English primary, Vietnamese parallel
+- Format: GitHub-flavored Markdown
+- All docs must match actual code/behavior (no stale docs)
 
 ### Quality Gates
-```
-- Code: lint pass, tests pass, no type errors
-- Docs: updated after each task
-- Knowledge: lessons learned captured in .prism/knowledge/
-```
+- Every SKILL.md has: version, Preamble, AskUserQuestion Format, step-by-step workflow
+- README and GETTING-STARTED match current feature set
+- Knowledge files updated after every significant change
 
 ## TECH STACK
 
-```
-[Liệt kê stack chính của dự án]
-```
+- **Framework**: Pure Markdown + Bash (zero dependencies for core)
+- **Skills**: Claude Code SKILL.md format (frontmatter YAML + Markdown body)
+- **Integration**: gstack (Garry Tan / YC) as git submodule in vendor/
+- **Browser**: gstack browse binary (requires Bun runtime)
+- **Hosting**: GitHub — github.com/duyentb95/prism-framework
 
 ## KEY CONSTRAINTS
 
-```
-[Những giới hạn quan trọng mà mọi agent cần biết]
-```
+- Zero runtime dependencies for core PRISM (no npm, no pip, just bash + markdown)
+- gstack is vendored, not forked — update via `git submodule update`
+- Skills must work both globally (~/.claude/skills/) and vendored (.claude/skills/)
+- Token budget: peak ~22K tokens at any moment (lazy loading architecture)
+- All .prism/ files are git-committable (no secrets, no binary, no temp data)
 
 ---
-*Last updated: [timestamp]*
-*Updated by: [Master-Agent / Human]*
+*Last updated: 2026-03-17*
+*Updated by: Master-Agent*

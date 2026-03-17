@@ -24,8 +24,11 @@ model: sonnet
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
 GSTACK=""
-[ -d "$_ROOT/.claude/skills/gstack" ] && GSTACK="$_ROOT/.claude/skills/gstack"
-[ -z "$GSTACK" ] && [ -d "$HOME/.claude/skills/gstack" ] && GSTACK="$HOME/.claude/skills/gstack"
+if [ -d "$_ROOT/.claude/skills/gstack" ]; then
+  GSTACK="$_ROOT/.claude/skills/gstack"
+elif [ -d "$HOME/.claude/skills/gstack" ]; then
+  GSTACK="$HOME/.claude/skills/gstack"
+fi
 if [ -n "$GSTACK" ]; then
   echo "BRANCH: $_BRANCH | GSTACK_ROOT: $GSTACK"
 else
@@ -185,12 +188,15 @@ Run once before any `/browse` or `/qa` command:
 ```bash
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
 B=""
-[ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
-[ -z "$B" ] && [ -x "$HOME/.claude/skills/gstack/browse/dist/browse" ] && B="$HOME/.claude/skills/gstack/browse/dist/browse"
-if [ -x "$B" ]; then
+if [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ]; then
+  B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+elif [ -x "$HOME/.claude/skills/gstack/browse/dist/browse" ]; then
+  B="$HOME/.claude/skills/gstack/browse/dist/browse"
+fi
+if [ -n "$B" ]; then
   echo "BROWSE_READY: $B"
 else
-  echo "NEEDS_BUILD: cd $GSTACK && bun install && bun run build"
+  echo "NEEDS_BUILD: cd ${GSTACK:-~/.claude/skills/gstack} && bun install && bun run build"
 fi
 ```
 

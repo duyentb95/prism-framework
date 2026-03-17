@@ -1,25 +1,23 @@
 # MASTER PLAN
 
-> Quản lý bởi Master-Agent. Review bởi Human.
-> Cập nhật sau mỗi task hoàn thành.
+> Managed by Master-Agent. Reviewed by Human.
+> Updated after each task completion.
 
 ## Current Sprint
 
-**Sprint**: #1 — [Tên sprint]
-**Goal**: [Mục tiêu sprint]
+**Sprint**: #1 — Framework Polish & Test
+**Goal**: Initialize PRISM on itself, validate all skills work, fix gaps
 **Status**: 🔄 In Progress
 
 ## Task Board
 
-| ID | Task | Model Tier | Status | Deps | Parallel? | Production? |
-|----|------|-----------|--------|------|-----------|-------------|
-| TASK_001 | [Design logic] | 🔴 Opus | ⏳ | None | Yes w/ 002 | No (one-time) |
-| TASK_002 | [Implement module] | 🟡 Sonnet | ⏳ | None | Yes w/ 001 | No |
-| TASK_003 | [Wire pipeline] | 🟡 Sonnet | ⏳ | 001, 002 | No | No |
-| TASK_004 | [Fix typo] | GSD | ⏳ | None | — | No |
-| PIPE_001 | [Fetch agent] | 🟢 Haiku | ⏳ | 003 | — | Yes (30min) |
-| PIPE_002 | [Detect agent] | 🟡 Sonnet | ⏳ | 003 | — | Yes (30min) |
-| PIPE_003 | [Post agent] | 🟢 Haiku | ⏳ | 003 | — | Yes (on signal) |
+| ID | Task | Model Tier | Status | Deps | Notes |
+|----|------|-----------|--------|------|-------|
+| TASK_001 | Initialize .prism/ with real project context | GSD | ✅ | None | CONTEXT_HUB, DICTIONARY, MASTER_PLAN populated |
+| TASK_002 | Upgrade all 5 skills to gstack standard | GSD | ✅ | None | Preamble + AskUserQuestion + versioned |
+| TASK_003 | Push to GitHub duyentb95/prism-framework | GSD | ✅ | 002 | Bilingual README + GETTING-STARTED |
+| TASK_004 | Create .prism/knowledge/ seed files | GSD | 🔄 | 001 | RULES.md, GOTCHAS.md, TECH_DECISIONS.md |
+| TASK_005 | Validate skills by testing commands | ⏳ | ⏳ | 004 | Test /plan, /compact, knowledge-spine |
 
 ### Status Legend
 - ⏳ Not started
@@ -28,47 +26,19 @@
 - ❌ Blocked
 - 🔁 Needs revision
 
-## Execution Order
-
-```
-Wave 1 (parallel):  TASK_001 + TASK_002 + TASK_004(GSD)
-Wave 2 (sequential): TASK_003 (depends on 001 + 002)
-```
-
 ## Completed Tasks Log
 
 | ID | Completed | Summary | Files Changed |
 |----|-----------|---------|---------------|
-| — | — | — | — |
+| TASK_001 | 2026-03-17 | Populated .prism/ with real PRISM project context | .prism/CONTEXT_HUB.md, DICTIONARY.md, MASTER_PLAN.md |
+| TASK_002 | 2026-03-17 | Upgraded all 5 SKILL.md to gstack professional standard | skills/*/SKILL.md (5 files) |
+| TASK_003 | 2026-03-17 | Pushed to GitHub with bilingual docs | README.md, GETTING-STARTED.md |
 
 ## Blockers & Issues
 
 | Issue | Severity | Owner | Status |
 |-------|----------|-------|--------|
-| — | — | — | — |
-
-## Cost Summary
-
-| Tier | Tasks | Est. Cost |
-|------|-------|-----------|
-| 🔴 Opus (reasoning) | N | $X.XX |
-| 🟡 Sonnet (implement) | N | $X.XX |
-| 🟢 Haiku (execute) | N | $X.XX |
-| GSD (Master self) | N | $0 |
-| **Sprint total** | | **$X.XX** |
-
-## Production Pipelines
-
-| Pipeline | Schedule | Agents | Daily Cost | Status |
-|----------|----------|--------|-----------|--------|
-| [Alert system] | 30min | Fetch→Detect→Post | ~$0.50 | ⏳ |
-| [Daily report] | Daily | Analyze→Format→Send | ~$0.10 | ⏳ |
-
-## Next Sprint Preview
-
-```
-[Nếu đã plan ahead]
-```
+| vendor/gstack not in repo (gitmodule, no clone) | Low | Human | gstack installed globally via manual clone |
 
 ---
-*Last updated: [timestamp]*
+*Last updated: 2026-03-17*
