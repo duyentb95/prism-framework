@@ -202,6 +202,39 @@ fi
 
 ---
 
+## Output Schema
+
+### Route Decision Format (internal, before loading SKILL.md)
+```
+🔀 ROUTE — [user intent summary]
+Match: [EXACT_COMMAND | INTENT_MATCH | PRISM_NATIVE | HANDOFF_SUGGESTION]
+Target: [gstack command or PRISM skill]
+SKILL.md: [path to load]
+Extra files: [paths or "none"]
+Est. tokens: ~[N]K
+```
+
+### gstack→PRISM Integration Format
+After any gstack command completes:
+```
+📥 INTEGRATED — [gstack command]
+Saved to: [.prism/ path]
+Knowledge extracted: [yes — N entries | no new knowledge]
+Standards updated: [yes — what changed | no]
+MASTER_PLAN updated: [yes — task NNN status | no]
+```
+
+### Error Format (when gstack unavailable)
+```
+⚠️ GSTACK NOT AVAILABLE
+Command: [what user requested]
+Reason: [not installed | SKILL.md missing | browse binary not built]
+Fallback: [PRISM-native alternative if exists]
+Action needed: [exact command to fix — e.g., "Run: ./setup --vendor"]
+```
+
+---
+
 ## Token Budget Rules
 
 ```

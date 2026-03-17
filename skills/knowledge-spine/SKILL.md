@@ -116,6 +116,54 @@ After appending:
 
 ---
 
+## Output Schema
+
+### RULES.md Entry Format
+```markdown
+## [Category] — [Rule Name]
+- **Rule**: [Concrete, actionable instruction]
+- **Example**: [Code snippet or before/after showing the rule applied]
+- **Anti-pattern**: [What violating this rule looks like]
+- **Source**: [Template path, task ID, or session date]
+- **Date**: [YYYY-MM-DD]
+```
+
+### GOTCHAS.md Entry Format
+```markdown
+## [YYYY-MM-DD] — [Short Title]
+- **Symptom**: [What you observe when this bites you]
+- **Root cause**: [Why it happens — 1 sentence]
+- **Fix**: [Exact steps or code to resolve]
+- **Prevention**: [How to avoid — config, lint rule, or workflow change]
+- **Severity**: [🔴 Critical | 🟡 Medium | 🟢 Low]
+- **Source**: TASK_NNN / [session description]
+```
+
+### TECH_DECISIONS.md Entry Format (ADR-lite)
+```markdown
+## [YYYY-MM-DD] — [Decision Title]
+- **Status**: [Proposed | Accepted | Deprecated | Superseded by ADR-NNN]
+- **Context**: [What prompted this — 1-2 sentences]
+- **Decision**: [What we chose — 1 sentence]
+- **Alternatives**:
+  1. [Alt 1] — rejected because [reason]
+  2. [Alt 2] — rejected because [reason]
+- **Consequences**: [What this means for future work]
+- **Review date**: [YYYY-MM-DD — when to revisit, or "N/A"]
+```
+
+### Confirmation Output Format
+After writing any knowledge entry:
+```
+📝 KNOWLEDGE CAPTURED
+Type: [RULE | GOTCHA | TECH_DECISION | DICTIONARY | STANDARD]
+File: [path]
+Entry: [title]
+Lines: [N] added
+```
+
+---
+
 ## Reverse Patterning
 
 When user provides a template/screenshot/sample output:

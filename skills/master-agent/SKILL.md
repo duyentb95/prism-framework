@@ -278,6 +278,341 @@ If gstack preamble reports `_SESSIONS >= 3` (user has multiple windows):
 
 ---
 
+## Output Schema
+
+### Plan Presentation Format
+When presenting a plan to the user:
+```
+📋 PLAN — [Project/Feature Name]
+Sprint: [N] | Tasks: [N] | Est. cost tier: [🔴N 🟡N 🟢N]
+
+| # | Task | Model | Deps | Est. | DoD |
+|---|------|-------|------|------|-----|
+| 001 | [name] | 🟡 Sonnet | — | 10m | [1-line DoD] |
+| 002 | [name] | 🟢 Haiku | 001 | 5m | [1-line DoD] |
+
+Parallel groups: [001+002] → [003] → [004+005]
+
+RECOMMENDATION: [1 sentence on approach]
+Ready? Type GO to execute.
+```
+
+### Status Report Format
+When reporting status:
+```
+📊 STATUS — [Project Name] @ [branch]
+Sprint [N] | [date]
+
+✅ Done: [N]/[total] | 🔄 Active: [N] | ⏳ Pending: [N] | 🚫 Blocked: [N]
+
+Recent:
+  ✅ TASK_001: [1-line summary]
+  🔄 TASK_002: [what's happening now]
+
+Next: [TASK_NNN — what + who does it]
+Blockers: [none | description]
+```
+
+### Review Verdict Format
+When reviewing sub-agent output:
+```
+🔍 REVIEW — TASK_NNN
+
+Spec compliance: [PASS ✅ | PARTIAL ⚠️ | FAIL ❌]
+  [if not PASS: list missing DoD items]
+
+Quality check: [PASS ✅ | CONCERNS ⚠️ | FAIL ❌]
+  [if not PASS: list specific issues]
+
+Verdict: [APPROVED → next task | NEEDS_FIX → re-dispatch | REJECTED → re-scope]
+Action: [exact next step]
+```
+
+---
+
+## Error Handling
+
+Every error case below specifies: **Detection** (how to spot it), **Impact** (what breaks), and **Fallback Chain** (3-step recovery). Never silently swallow errors.
+
+### ERR-01: CONTEXT_HUB.md Missing or Corrupted
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | `Read .prism/CONTEXT_HUB.md` returns file-not-found or content has no `## ` headers / is under 10 lines |
+| **Impact** | Master-Agent has no project WHY/WHO/STANDARDS — all planning decisions are ungrounded |
+| **Fallback** | 1. Scan project root for README.md, package.json, pyproject.toml — infer project context from available files |
+|  | 2. Generate a minimal CONTEXT_HUB.md skeleton from inferred context and present to user for validation |
+|  | 3. If no project files exist either → AskUserQuestion: "I can't find project context. Please describe: What is this project? Who is it for? What tech stack?" |
+
+### ERR-02: MASTER_PLAN.md Missing or Corrupted
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | File missing, empty, or has no task entries (no `TASK_` pattern found) |
+| **Impact** | No task board — cannot track progress, dispatch, or report status |
+| **Fallback** | 1. Check `.prism/tasks/` directory for individual task briefs — reconstruct plan from those |
+|  | 2. Check git log for recent `.prism/MASTER_PLAN.md` commits — restore last known good version |
+|  | 3. If unrecoverable → inform user, offer to create fresh MASTER_PLAN.md from current request |
+
+### ERR-03: Sub-Agent Returns Garbage / Incomplete Handover
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | Sub-agent output is missing "Brief for Master" section, has no file paths listed, or DoD items are not addressed |
+| **Impact** | Cannot verify task completion — risk of accepting broken work |
+| **Fallback** | 1. Run automated check: diff files listed in task brief vs files actually modified — flag discrepancies |
+|  | 2. If output is partially usable → mark task `DONE_WITH_CONCERNS`, list specific gaps, re-dispatch same task with clarified brief |
+|  | 3. If output is unusable → mark task `BLOCKED`, rewrite task brief with more explicit instructions + sample output, dispatch fresh sub-agent |
+
+### ERR-04: gstack Not Installed When Routing to gstack Command
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | gstack-bridge SKILL.md not found at `$PROJECT_ROOT/.claude/skills/gstack/` or `$HOME/.claude/skills/gstack/` |
+| **Impact** | Cannot execute /review, /ship, /qa, /browse, /retro, or any gstack workflow |
+| **Fallback** | 1. Inform user: "gstack is not installed. I can still handle this with PRISM's built-in capabilities (reduced feature set)." |
+|  | 2. For critical commands (/review, /ship): execute a simplified inline version using PRISM checklist logic |
+|  | 3. Offer installation: "Run `npx gstack-setup` or manually clone gstack into `.claude/skills/gstack/`" |
+
+### ERR-05: Git Not Initialized
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | Preamble `_BRANCH` returns `unknown`; `git status` fails |
+| **Impact** | Cannot branch, commit, diff, or run /ship and /review workflows |
+| **Fallback** | 1. Check if this is intentional (some projects use other VCS or none) — AskUserQuestion before initializing |
+|  | 2. If user confirms git needed → `git init` + create `.gitignore` with sensible defaults |
+|  | 3. If user says no git → disable all git-dependent features, warn when routing to /ship or /review |
+
+### ERR-06: .prism/ Directory Missing Mid-Session
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | Any `.prism/` file read fails after initial preamble showed `_PRISM=true` |
+| **Impact** | Session state, plans, and knowledge are gone — likely accidental deletion or branch switch |
+| **Fallback** | 1. Check git: `git status .prism/` and `git stash list` — directory may be recoverable |
+|  | 2. Check if branch changed: compare current branch vs preamble `_BRANCH` — if different, user switched branches |
+|  | 3. If unrecoverable → halt execution, inform user: ".prism/ directory disappeared. Was this intentional? I can re-initialize or switch to the correct branch." |
+
+### ERR-07: Task Brief References Files That Don't Exist
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | Before dispatching a task, verify all paths in the task brief's `Context` section exist using `Glob` or `Read` |
+| **Impact** | Sub-agent will waste tokens on missing-file errors or hallucinate content |
+| **Fallback** | 1. Search for similarly named files (typo correction) — suggest corrections |
+|  | 2. If file was supposed to be created by a prior task → check that task's status; if not done, re-order dependencies |
+|  | 3. If file genuinely doesn't exist → update task brief to remove the reference, add note explaining what info was expected from that file |
+
+### ERR-08: Sub-Agent Modifies Files Outside Its Scope
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | During review, diff the sub-agent's changes against the file list in its task brief. Any file modified that's NOT in the brief's scope is a violation |
+| **Impact** | Unreviewed side effects — could break other tasks or overwrite concurrent work |
+| **Fallback** | 1. Revert out-of-scope changes using `git checkout -- <file>` for each unauthorized file |
+|  | 2. Review: were the out-of-scope changes actually needed? If yes → create a new task for them properly |
+|  | 3. Update the sub-agent task brief template to explicitly state: "Do NOT modify files outside the listed scope" |
+
+### ERR-09: STAGING.md Exists but Is from a Different Project/Branch
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | Compare `_BRANCH` from preamble with branch recorded in STAGING.md. Also check project name if present |
+| **Impact** | Resuming wrong context → all planning and execution will be based on stale/wrong assumptions |
+| **Fallback** | 1. Warn user: "STAGING.md is from branch `X` but you're on branch `Y`. Which context do you want?" |
+|  | 2. If user picks current branch → archive old STAGING.md to `.prism/adhoc/STAGING_archived_{date}.md`, start fresh |
+|  | 3. If user wants the other branch → suggest `git checkout X` first, then resume |
+
+### ERR-10: Circular Task Dependencies Detected
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | When building execution order, detect if TASK_A depends on TASK_B which depends on TASK_A (or longer cycles) |
+| **Impact** | Deadlock — no task can start because each waits for the other |
+| **Fallback** | 1. Identify the cycle and display it: "Circular dependency: TASK_003 → TASK_007 → TASK_003" |
+|  | 2. Analyze: which dependency is weaker? Can one task start with partial output from the other? |
+|  | 3. AskUserQuestion: present the cycle, recommend breaking it by splitting one task into independent + dependent parts |
+
+### ERR-11: User Says "GO" but Plan Hasn't Been Approved
+
+| Aspect | Detail |
+|--------|--------|
+| **Detection** | User says "GO" / "CONFIRMED" but no plan exists in MASTER_PLAN.md, or the plan was modified since last user review |
+| **Impact** | Executing against an unreviewed or stale plan — risk of wasted effort |
+| **Fallback** | 1. Check MASTER_PLAN.md existence and last-modified timestamp |
+|  | 2. If plan exists but was auto-generated (no user review marker) → display plan summary, ask for explicit approval |
+|  | 3. If no plan exists → "There's no approved plan yet. Let me create one first. What would you like to build?" |
+
+---
+
+## Session-Aware Routing
+
+### Branch Mismatch Detection
+
+If `_HAS_STAGING` is `true`: after reading STAGING.md, extract the recorded branch. Compare with `_BRANCH` from preamble.
+
+```
+If STAGING.md branch != _BRANCH:
+  → WARN: "STAGING.md was saved on branch `{staging_branch}` but you're now on `{_BRANCH}`.
+     A) Resume on current branch `{_BRANCH}` (archive old STAGING.md)
+     B) Switch to `{staging_branch}` to continue where you left off
+     C) Ignore STAGING.md and start fresh on `{_BRANCH}`"
+  → Do NOT silently absorb mismatched context
+```
+
+### Multi-Session Context Enrichment
+
+If session count >= 3 (user has multiple windows or has resumed multiple times):
+
+```
+Every AskUserQuestion MUST include in the re-ground prefix:
+  "Project: {project_name} | Branch: {_BRANCH} | Current task: {active_task_id}: {task_name}"
+
+This prevents cross-session confusion where the user forgets which window is doing what.
+```
+
+### Conversation Length Monitor
+
+Track exchange count (each user message + agent response = 1 exchange).
+
+```
+If exchanges > 30:
+  → Proactively suggest: "This session has 30+ exchanges. Context quality may degrade.
+     Want me to compact context into STAGING.md so you can start a fresh session?"
+  → Do NOT force compaction — the user may prefer to continue
+  → Repeat the suggestion every 15 exchanges after the first warning
+```
+
+### Re-Ground After Long Output
+
+After any tool output exceeding ~100 lines (large file reads, long diffs, verbose command output):
+
+```
+ALWAYS immediately restate:
+  "Returning to: TASK_{NNN} — {task_name}. Next step: {what_we_were_about_to_do}."
+
+This prevents the agent from drifting after absorbing large content.
+Long output is a known cause of goal displacement in multi-step workflows.
+```
+
+---
+
+## Self-Regulation
+
+### Plan Complexity Check
+
+```
+IF plan has > 15 tasks:
+  → MUST split into sub-projects, each with its own mini-cycle:
+    Sub-Project A: [tasks 1-8]  → Plan → Execute → Review → Ship
+    Sub-Project B: [tasks 9-15] → Plan → Execute → Review → Ship
+  → Present sub-project breakdown to user before proceeding
+  → Each sub-project gets its own section in MASTER_PLAN.md
+```
+
+### Task Granularity Check
+
+```
+IF any task is estimated > 30 minutes:
+  → MUST decompose further before dispatching
+  → A 30-min task usually hides 2-4 distinct sub-tasks
+  → Ask: "Can a junior complete this in one sitting without asking questions?"
+    If no → it's not granular enough
+  → Exception: if the task is purely mechanical (e.g., "format 50 files") — time is OK, complexity is low
+```
+
+### Scope Creep Detector
+
+```
+DURING execution (after "GO"), if user adds a new request:
+  1. Classify: is this related to current sprint or new work?
+  2. If new work → route to .prism/adhoc/ADHOC_NNN.md
+     Say: "Got it. I've logged this as AD-HOC. Want me to handle it after the current sprint,
+           or should I add it to the active sprint?"
+  3. If user explicitly says "add to sprint" → update MASTER_PLAN.md, re-evaluate dependencies
+  4. NEVER silently absorb new scope into the current sprint — always make it visible
+```
+
+### Delegation Sanity (Model Tier Enforcement)
+
+```
+Before dispatching any task, verify model tier is appropriate:
+
+  🔴 Opus: ONLY for tasks requiring deep reasoning, novel architecture, complex debugging,
+           or multi-file analysis with non-obvious connections.
+     → If task is "implement feature from detailed spec" → downgrade to 🟡 Sonnet
+
+  🟡 Sonnet: For implementation, structured analysis, code generation from specs,
+             summarization, classification.
+     → If task is "fetch data and format output" → downgrade to 🟢 Haiku
+
+  🟢 Haiku: For mechanical execution, API calls, formatting, simple checks, alerting.
+     → If task requires judgment calls or architectural decisions → upgrade to 🟡 Sonnet
+
+RULE: "Never delegate to Opus what Sonnet can do.
+       Never delegate to Sonnet what Haiku can do.
+       Cost waste is a planning failure, not an execution failure."
+```
+
+---
+
+## Fallback Chain Protocol
+
+For ANY critical operation in the Master-Agent workflow, follow this 3-step chain:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  FALLBACK CHAIN                          │
+│                                                          │
+│  Step 1: PRIMARY ACTION                                  │
+│    → Try the intended operation                          │
+│    → If success → continue workflow                      │
+│                                                          │
+│  Step 2: FALLBACK ACTION                                 │
+│    → If Step 1 fails → try the alternative               │
+│    → Log what failed and why                             │
+│    → If success → continue workflow with a note           │
+│                                                          │
+│  Step 3: USER ESCALATION                                 │
+│    → If Step 2 also fails → AskUserQuestion              │
+│    → Include: what you tried, what failed, what you need │
+│    → NEVER silently fail                                 │
+│    → NEVER retry the same action more than once          │
+│                                                          │
+│  Anti-patterns:                                          │
+│    ✗ Retry the same failing command 3+ times             │
+│    ✗ Silently skip a failed step and continue            │
+│    ✗ Hallucinate a result when the real one is missing   │
+│    ✗ Escalate to user without trying the fallback first  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Fallback Chain Examples
+
+| Operation | Step 1 (Primary) | Step 2 (Fallback) | Step 3 (Escalate) |
+|-----------|-------------------|--------------------|--------------------|
+| Read CONTEXT_HUB | `Read .prism/CONTEXT_HUB.md` | Infer context from README + package.json | Ask user to describe project context |
+| Read MASTER_PLAN | `Read .prism/MASTER_PLAN.md` | Reconstruct from `.prism/tasks/` directory | Ask user for current priorities |
+| Route gstack command | Load gstack-bridge SKILL.md | Execute simplified inline version | Tell user gstack is needed, offer install instructions |
+| Verify task output | Diff against DoD checklist | Read sub-agent's "Brief for Master" section | Ask user to manually verify the output |
+| Get git branch | `git branch --show-current` | `git rev-parse --abbrev-ref HEAD` | Ask user: "What branch should I work on?" |
+| Dispatch sub-agent | Create task brief + context file | Create combined single-file brief (no separate context) | Ask user to manually create the session |
+| Read template/sample | `Read .prism/templates/{file}` | Search project for similar files as reference | Ask user to provide sample or describe expected output |
+
+### When to Invoke the Fallback Chain
+
+The chain applies to these categories of operations:
+
+1. **File reads** that are required for planning (CONTEXT_HUB, MASTER_PLAN, DICTIONARY, STAGING)
+2. **Tool invocations** that may fail (git, gstack routing, file system operations)
+3. **Sub-agent integration** (dispatching, reviewing output, extracting knowledge)
+4. **State transitions** (marking tasks done, updating plans, compacting context)
+
+For non-critical operations (reading optional files, cosmetic formatting), a single attempt + skip is acceptable.
+
+---
+
 ## Output Rules
 
 1. **Transparent**: Explain WHY for every decision

@@ -109,6 +109,49 @@ To continue this work:
 
 ---
 
+## Output Schema
+
+### STAGING.md Format (STRICT)
+```markdown
+# STAGING — Session Snapshot
+**Date**: [YYYY-MM-DD HH:mm UTC+7]
+**Branch**: [exact branch name]
+**Project**: [project name from CONTEXT_HUB or directory name]
+**Session purpose**: [1 sentence]
+**Session duration**: ~[N] exchanges
+
+## Task Progress
+| Task | Status | Summary | Next Step |
+|------|--------|---------|-----------|
+| TASK_001 | ✅ | [done what] | — |
+| TASK_002 | 🔄 | [at what point] | [exact next action] |
+| TASK_003 | ⏳ | Not started | [what to do first] |
+
+## Decisions Made This Session
+1. **[Topic]**: [Decision] — because [reason]
+
+## Open Questions / Blockers
+- ❓ [Question needing human input]
+- 🚫 [Blocker with dependency info]
+[or: None]
+
+## Files Modified This Session
+- `path/file` — [what changed]
+[or: No files modified]
+
+## Knowledge Added
+- Added to RULES.md: [entry summary]
+- Added to GOTCHAS.md: [entry summary]
+[or: No knowledge entries this session]
+
+## Resume Instructions
+1. Read `.prism/STAGING.md` (this file)
+2. Read `.prism/MASTER_PLAN.md`
+3. **Next action**: [specific command or step — copy-pasteable]
+```
+
+---
+
 ## Step 3: Signal User
 
 Output exactly: **"Context consolidated into `.prism/STAGING.md`. Safe to start a fresh session. Resume with: `Read .prism/STAGING.md and resume`"**

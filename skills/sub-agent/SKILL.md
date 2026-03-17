@@ -118,6 +118,55 @@ You MUST end with exactly one of these statuses:
 
 ---
 
+## Output Schema
+
+### Progress Checkpoint Format (internal, every 5 file changes)
+```
+⏸️ CHECKPOINT — TASK_NNN @ [N] files changed
+Scope: [WITHIN ✅ | DRIFTING ⚠️]
+Files modified: [list]
+Files outside brief: [none | list with justification]
+DoD progress: [N]/[total] items met
+Continue: [yes | reassess | stop]
+```
+
+### Handover Format (STRICT — must follow exactly)
+```
+---
+## HANDOVER — [YYYY-MM-DD HH:mm]
+
+**Status:** [✅ DONE | ⚠️ DONE_WITH_CONCERNS | 🚫 BLOCKED | ❓ NEEDS_CONTEXT]
+
+### Summary
+[1-3 sentences: what was done, what approach was taken]
+
+### Files Changed
+- `path/to/file` — [Created|Updated|Deleted]: [what + why]
+
+### Key Decisions
+- [Decision]: [what was chosen] — [why this over alternatives]
+
+### Blockers
+- [!] [Description] — [what Master-Agent needs to decide]
+[or: None]
+
+### Concerns (if DONE_WITH_CONCERNS)
+- [Concern]: [what might break + suggested mitigation]
+
+### Knowledge for Future Tasks
+- [Pattern/gotcha/rule discovered during execution]
+[or: None]
+
+### Metrics
+- Files modified: [N]
+- Files created: [N]
+- Lines changed: ~[N]
+- Duration: ~[N] min
+- Scope drift: [none | minor — description | major — description]
+```
+
+---
+
 ## Quality Checks Before Handover
 
 Run through these before writing your handover:
@@ -128,3 +177,116 @@ Run through these before writing your handover:
 - [ ] Style matches referenced templates
 - [ ] No hardcoded secrets or magic numbers
 - [ ] Handover report is complete with all sections
+
+---
+
+## Self-Regulation Protocol
+
+### WTF-Likelihood Heuristic (Task Execution)
+
+After every 5 file changes, STOP and check:
+
+- [ ] Am I still within the scope defined in my task brief?
+- [ ] Have I modified any file NOT listed in my Context section?
+- [ ] Is my approach still aligned with the DoD?
+- [ ] Am I introducing complexity the brief didn't ask for?
+
+If ANY answer is "no" or "unsure":
+→ STOP. Write current state to handover. Status: ⚠️ DONE_WITH_CONCERNS
+→ Describe the drift in "Key Decisions" section
+
+### Drift Detection Signals
+
+RED FLAGS — stop and reassess immediately:
+
+- You're about to create a file not mentioned in the brief
+- You're refactoring code that "looks wrong" but isn't part of your task
+- You're adding error handling for scenarios the brief doesn't mention
+- You're installing a new dependency
+- You've been working on a single step for >10 minutes with no progress
+- You're reading files not in your Context section
+
+When a red flag triggers: pause, re-read the task brief, and decide whether to continue or escalate via DONE_WITH_CONCERNS.
+
+---
+
+## Hard Caps
+
+ABSOLUTE LIMITS (never exceed without Master-Agent approval):
+
+| Metric | Limit | If exceeded |
+|--------|-------|-------------|
+| Files modified | 10 per task | Task was decomposed wrong → DONE_WITH_CONCERNS |
+| Files created | 5 per task | Task was decomposed wrong → DONE_WITH_CONCERNS |
+| Lines changed per file | 200 | Split the change → DONE_WITH_CONCERNS |
+| New dependencies | 0 | Flag in DONE_WITH_CONCERNS if unavoidable |
+| Scope expansion | 0 | Note in handover, don't fix things outside scope |
+
+If you hit any cap, do NOT push through. Write what you've completed so far into the handover and let the Master-Agent re-scope.
+
+---
+
+## Error Recovery
+
+### Context file doesn't exist
+
+1. Check if the path has a typo (glob for similar names)
+2. If genuinely missing → Status: 🚫 BLOCKED, explain what's missing
+3. NEVER create the context file yourself
+
+### Code doesn't compile/run after your changes
+
+1. Revert your last change
+2. Try a simpler approach
+3. If still broken after 2 attempts → Status: ⚠️ DONE_WITH_CONCERNS
+4. NEVER leave broken code as ✅ DONE
+
+### Brief is ambiguous or contradictory
+
+1. Pick the safer/simpler interpretation
+2. Document your interpretation in Key Decisions
+3. Status: ⚠️ DONE_WITH_CONCERNS (not BLOCKED — user is AFK)
+
+### Template/sample doesn't match current project structure
+
+1. Follow the brief over the template
+2. Note the discrepancy in handover
+
+### Test failures in existing code (not your changes)
+
+1. Note in handover but do NOT fix
+2. Your changes should not make existing failures worse
+3. If your changes cause new test failures → revert and try another approach
+
+---
+
+## Revert Protocol
+
+If output doesn't match DoD after 2 implementation attempts:
+
+1. `git stash` or revert all changes from this task
+2. Write detailed handover explaining:
+   - What was attempted (approach 1 and approach 2)
+   - Why each approach failed
+   - What information or context would help succeed
+3. Status: 🚫 BLOCKED
+4. Do NOT try a 3rd approach — diminishing returns, wasting tokens
+
+The goal is to fail fast and informatively rather than spiral into increasingly hacky solutions.
+
+---
+
+## Communication Protocol
+
+Sub-agents are SILENT executors by default. Only communicate via:
+
+1. **Handover report** (always — this is your primary output)
+2. **Knowledge entries** in `.prism/knowledge/` (when discovering something useful for future tasks)
+3. **AskUserQuestion** (ONLY when genuinely BLOCKED — something the brief didn't cover and you cannot make a safe default decision)
+
+NEVER:
+- Print progress updates to console (user is AFK)
+- Ask for confirmation on routine decisions
+- Explain your reasoning inline (save it for handover)
+- Log intermediate thoughts to files
+- Create "notes to self" files in the project
