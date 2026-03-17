@@ -1,0 +1,307 @@
+#!/bin/bash
+# ============================================================
+# PRISM — Setup v2
+# ============================================================
+#
+# Architecture: gstack is vendored inside this framework repo.
+#   - Clone framework ONCE → gstack included
+#   - ./setup installs everything globally
+#   - ./setup --project /path → add to any project
+#   - ./setup --update → pull latest gstack
+#
+# Usage:
+#   ./setup                          # Full: global + current dir
+#   ./setup --project /path/to/proj  # Add to existing project
+#   ./setup --update                 # Update gstack to latest
+#   ./setup --uninstall              # Remove everything
+#   ./setup --status                 # Check what's installed
+# ============================================================
+
+set -e
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+FRAMEWORK_DIR="$(cd "$(dirname "$0")" && pwd)"
+GLOBAL_SKILLS="$HOME/.claude/skills"
+GLOBAL_COMMANDS="$HOME/.claude/commands"
+GSTACK_VENDOR="$FRAMEWORK_DIR/vendor/gstack"
+
+log_step()  { echo -e "\n${BLUE}▸${NC} ${BOLD}$1${NC}"; }
+log_ok()    { echo -e "  ${GREEN}✓${NC} $1"; }
+log_warn()  { echo -e "  ${YELLOW}⚠${NC} $1"; }
+log_err()   { echo -e "  ${RED}✗${NC} $1"; }
+log_info()  { echo -e "  ${BLUE}ℹ${NC} $1"; }
+
+# ============================================================
+# Step 1: Ensure vendor/gstack exists
+# ============================================================
+
+init_vendor() {
+    log_step "Checking vendor/gstack..."
+
+    if [ -f "$GSTACK_VENDOR/setup" ]; then
+        log_ok "gstack vendored at vendor/gstack/"
+        return 0
+    fi
+
+    # Try git submodule first
+    if [ -f "$FRAMEWORK_DIR/.gitmodules" ] && grep -q "gstack" "$FRAMEWORK_DIR/.gitmodules" 2>/dev/null; then
+        log_info "Initializing git submodule..."
+        cd "$FRAMEWORK_DIR"
+        git submodule update --init --recursive vendor/gstack 2>/dev/null
+        if [ -f "$GSTACK_VENDOR/setup" ]; then
+            log_ok "gstack submodule initialized"
+            return 0
+        fi
+    fi
+
+    # Fallback: clone
+    log_info "Cloning gstack from GitHub..."
+    mkdir -p "$FRAMEWORK_DIR/vendor"
+    if git clone --quiet --depth 1 https://github.com/garrytan/gstack.git "$GSTACK_VENDOR" 2>/dev/null; then
+        log_ok "gstack cloned (shallow)"
+    else
+        log_err "Clone failed. Check internet. Manual: git clone https://github.com/garrytan/gstack.git vendor/gstack"
+        return 1
+    fi
+}
+
+# ============================================================
+# Step 2: Install globally
+# ============================================================
+
+install_global() {
+    log_step "Installing PRISM skills → $GLOBAL_SKILLS/"
+    mkdir -p "$GLOBAL_SKILLS" "$GLOBAL_COMMANDS" "$HOME/.claude"
+
+    for skill_dir in "$FRAMEWORK_DIR/skills"/*/; do
+        [ -d "$skill_dir" ] || continue
+        skill_name=$(basename "$skill_dir")
+        cp -r "$skill_dir" "$GLOBAL_SKILLS/$skill_name"
+        log_ok "$skill_name"
+    done
+
+    if [ -d "$FRAMEWORK_DIR/commands" ]; then
+        cp "$FRAMEWORK_DIR/commands"/*.md "$GLOBAL_COMMANDS/" 2>/dev/null || true
+        log_ok "PRISM commands"
+    fi
+
+    # --- gstack ---
+    log_step "Installing gstack → $GLOBAL_SKILLS/gstack/"
+
+    if [ -d "$GSTACK_VENDOR" ] && [ -f "$GSTACK_VENDOR/setup" ]; then
+        [ -d "$GLOBAL_SKILLS/gstack" ] && rm -rf "$GLOBAL_SKILLS/gstack"
+        cp -Rf "$GSTACK_VENDOR" "$GLOBAL_SKILLS/gstack"
+        rm -rf "$GLOBAL_SKILLS/gstack/.git"
+
+        cd "$GLOBAL_SKILLS/gstack"
+        chmod +x ./setup
+        if ./setup 2>/dev/null; then
+            log_ok "gstack ready (browse binary + symlinks)"
+        else
+            log_warn "gstack setup had issues — try: cd ~/.claude/skills/gstack && bun install && bun run build"
+        fi
+        cd "$FRAMEWORK_DIR"
+
+        for s in plan-ceo-review plan-eng-review review ship browse qa retro setup-browser-cookies document-release; do
+            if [ -L "$GLOBAL_SKILLS/$s" ] || [ -d "$GLOBAL_SKILLS/gstack/$s" ]; then
+                log_ok "  /$s"
+            fi
+        done
+    else
+        log_warn "vendor/gstack not found — run ./setup --update"
+    fi
+
+    # Settings
+    if [ ! -f "$HOME/.claude/settings.json" ]; then
+        cp "$FRAMEWORK_DIR/.claude/settings.json" "$HOME/.claude/settings.json"
+        log_ok "Global settings.json"
+    fi
+
+    # Superpowers
+    log_step "Superpowers plugin"
+    log_info "Install in Claude Code: /plugin marketplace add obra/superpowers"
+}
+
+# ============================================================
+# Step 3: Setup project
+# ============================================================
+
+setup_project() {
+    local P="$1"
+    log_step "Setting up project → $P/"
+
+    [ -d "$P" ] || { log_err "Not found: $P"; return 1; }
+
+    # Core files (don't overwrite existing)
+    for f in CLAUDE.md .claudecodeignore; do
+        if [ ! -f "$P/$f" ]; then
+            cp "$FRAMEWORK_DIR/$f" "$P/$f"
+            log_ok "$f"
+        else
+            log_info "$f exists — skipped"
+        fi
+    done
+
+    # .prism/
+    if [ ! -d "$P/.prism" ]; then
+        cp -r "$FRAMEWORK_DIR/.prism" "$P/.prism"
+    fi
+    for d in tasks adhoc templates knowledge context designs qa-reports retros brainstorms; do
+        mkdir -p "$P/.prism/$d"
+    done
+    log_ok ".prism/ structure"
+
+    # .claude/settings.json
+    mkdir -p "$P/.claude"
+    [ ! -f "$P/.claude/settings.json" ] && cp "$FRAMEWORK_DIR/.claude/settings.json" "$P/.claude/settings.json"
+    log_ok ".claude/settings.json"
+
+    # Vendor gstack into project?
+    echo ""
+    echo -e "  ${YELLOW}Vendor gstack into this project so teammates get it via git?${NC}"
+    echo -e "  (They'll only need to run: cd .claude/skills/gstack && ./setup)"
+    echo -ne "  ${BOLD}[y/N]:${NC} "
+    read -r REPLY
+    if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+        if [ -d "$GSTACK_VENDOR" ]; then
+            mkdir -p "$P/.claude/skills"
+            cp -Rf "$GSTACK_VENDOR" "$P/.claude/skills/gstack"
+            rm -rf "$P/.claude/skills/gstack/.git"
+            log_ok "gstack vendored → .claude/skills/gstack/"
+            log_info "Teammates: cd .claude/skills/gstack && ./setup"
+        fi
+    else
+        log_info "Skipped — teammates need global gstack install"
+    fi
+}
+
+# ============================================================
+# Update
+# ============================================================
+
+update_all() {
+    log_step "Updating vendor/gstack..."
+
+    if [ -d "$GSTACK_VENDOR/.git" ]; then
+        cd "$GSTACK_VENDOR" && git pull --quiet && cd "$FRAMEWORK_DIR"
+        log_ok "vendor/gstack updated"
+    else
+        rm -rf "$GSTACK_VENDOR"
+        git clone --quiet --depth 1 https://github.com/garrytan/gstack.git "$GSTACK_VENDOR"
+        log_ok "vendor/gstack re-cloned"
+    fi
+
+    install_global
+    log_ok "Update complete"
+}
+
+# ============================================================
+# Status
+# ============================================================
+
+check_status() {
+    log_step "Status"
+
+    echo -e "\n  ${BOLD}Framework repo:${NC}"
+    [ -f "$FRAMEWORK_DIR/CLAUDE.md" ] && log_ok "CLAUDE.md" || log_err "CLAUDE.md"
+    [ -d "$FRAMEWORK_DIR/skills" ] && log_ok "skills/" || log_err "skills/"
+    [ -f "$GSTACK_VENDOR/setup" ] && log_ok "vendor/gstack/" || log_warn "vendor/gstack/ (run --update)"
+
+    echo -e "\n  ${BOLD}Global installs (~/.claude/skills/):${NC}"
+    for s in master-agent sub-agent context-compactor knowledge-spine gstack-bridge; do
+        [ -d "$GLOBAL_SKILLS/$s" ] && log_ok "$s" || log_warn "$s"
+    done
+    [ -d "$GLOBAL_SKILLS/gstack" ] && log_ok "gstack" || log_warn "gstack"
+
+    echo -e "\n  ${BOLD}gstack skills:${NC}"
+    for s in plan-ceo-review plan-eng-review review ship browse qa retro setup-browser-cookies document-release; do
+        [ -L "$GLOBAL_SKILLS/$s" ] && log_ok "/$s" || log_warn "/$s"
+    done
+
+    echo -e "\n  ${BOLD}Tools:${NC}"
+    command -v claude &>/dev/null && log_ok "Claude Code" || log_warn "Claude Code"
+    command -v git &>/dev/null && log_ok "Git" || log_err "Git"
+    command -v bun &>/dev/null && log_ok "Bun" || log_warn "Bun (for /browse)"
+}
+
+# ============================================================
+# Uninstall
+# ============================================================
+
+uninstall_all() {
+    log_step "Uninstalling..."
+    for s in master-agent sub-agent context-compactor knowledge-spine; do
+        rm -rf "$GLOBAL_SKILLS/$s" 2>/dev/null && log_ok "Removed $s"
+    done
+    for s in browse plan-ceo-review plan-eng-review review ship retro qa qa-only setup-browser-cookies document-release gstack-upgrade; do
+        rm -f "$GLOBAL_SKILLS/$s" 2>/dev/null
+    done
+    rm -rf "$GLOBAL_SKILLS/gstack" 2>/dev/null && log_ok "Removed gstack"
+    rm -f "$GLOBAL_COMMANDS"/commands.md 2>/dev/null && log_ok "Removed commands"
+    echo ""
+    log_warn "Project files (CLAUDE.md, .prism/) NOT removed — delete manually per project."
+    log_ok "Done"
+}
+
+# ============================================================
+# Summary
+# ============================================================
+
+print_summary() {
+    echo ""
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD} PRISM — Installed${NC}"
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e " ${BOLD}Add to another project:${NC}"
+    echo -e "   ./setup --project ~/projects/my-other-app"
+    echo ""
+    echo -e " ${BOLD}Update dependencies:${NC}"
+    echo -e "   ./setup --update"
+    echo ""
+    echo -e " ${BOLD}Start working:${NC}"
+    echo -e "   cd your-project && claude"
+    echo -e "   > /ceo-review → /eng-review → /plan → GO"
+    echo -e "   > /paranoid-review → /ship-it → /document-release → /qa-check → /retro"
+    echo ""
+    echo -e " ${BOLD}Docs:${NC} GETTING-STARTED.md"
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+# ============================================================
+# Main
+# ============================================================
+
+echo -e "\n${BOLD}PRISM — Setup v2${NC}"
+
+case "${1:-}" in
+    --project)   setup_project "$(cd "${2:-.}" && pwd)"; print_summary ;;
+    --update)    update_all ;;
+    --status)    check_status ;;
+    --uninstall) uninstall_all ;;
+    --help|-h)
+        echo -e "\nUsage: ./setup [option]\n"
+        echo "  (no args)                Full install: global + current dir"
+        echo "  --project /path          Add framework to existing project"
+        echo "  --update                 Update gstack to latest"
+        echo "  --status                 Check installation status"
+        echo "  --uninstall              Remove all global installs"
+        echo "  --help                   Show this help"
+        ;;
+    *)
+        log_step "Prerequisites..."
+        command -v git &>/dev/null && log_ok "Git" || { log_err "Git required"; exit 1; }
+        command -v claude &>/dev/null && log_ok "Claude Code" || log_warn "Claude Code not found"
+        command -v bun &>/dev/null && log_ok "Bun" || log_warn "Bun not found (for /browse)"
+        init_vendor
+        install_global
+        setup_project "$(pwd)"
+        print_summary
+        ;;
+esac

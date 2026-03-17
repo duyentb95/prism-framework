@@ -1,0 +1,14 @@
+# gstack build artifacts (vendored source is tracked, builds are not)
+vendor/gstack/browse/dist/
+vendor/gstack/node_modules/
+vendor/gstack/.gstack/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
