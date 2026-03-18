@@ -23,7 +23,7 @@ That's it. PRISM skills are now available globally in Claude Code.
 2. Clones gstack (browser automation + cognitive modes) if needed
 3. Copies 12 PRISM skills → `~/.claude/skills/`
 4. Copies gstack → `~/.claude/skills/gstack/`
-5. Copies 30 slash commands → `~/.claude/commands/`
+5. Copies 32 slash commands → `~/.claude/commands/`
 
 </details>
 
@@ -35,11 +35,11 @@ That's it. PRISM skills are now available globally in Claude Code.
 ./setup --project ~/my-project
 ```
 
-Setup asks 5 quick questions about your project (~30 seconds), then creates:
+Setup asks 6 quick questions about your project (~30 seconds), then creates:
 
-- **`CLAUDE.md`** — instructions for Claude (how to think about your project)
+- **`CLAUDE.md`** — instructions for Claude, tailored to your project type (web app, API, data, etc.)
 - **`.prism/`** — shared knowledge folder (grows smarter over time), pre-filled with your answers
-- **`.claude/commands/`** — 30 slash commands for the full PRISM workflow
+- **`.claude/commands/`** — 32 slash commands for the full PRISM workflow
 
 ---
 
@@ -166,6 +166,7 @@ No planning. Just do it. Done.
 | | `/status` | Current sprint status | "Where was I?" |
 | | `/compact` | Save state for session handoff | Session getting long |
 | | `/adhoc [task]` | Handle out-of-scope request | Boss wants something unplanned |
+| | `/skill-audit` | Detect overlapping skills, clean up | After installing new skills |
 
 ---
 
@@ -305,6 +306,9 @@ Run `./setup --status` to check. If gstack is missing: `./setup --update`.
 
 **"I don't know which command to use."**
 Type `/start` — it detects your project state and recommends the right next step.
+
+**"My custom skills conflict with PRISM skills."**
+Run `/skill-audit` — it scans all installed skills, detects overlapping triggers, and helps you resolve conflicts.
 
 ---
 

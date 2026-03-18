@@ -40,7 +40,7 @@ Done. Open any project with `claude` — PRISM skills are available globally.
 ./setup --project ~/my-project
 ```
 
-This copies `CLAUDE.md` + `.prism/` into your project. Commit them to git — teammates get the context automatically.
+Setup asks about your project (name, stack, audience) and generates a tailored `CLAUDE.md` + `.prism/` with your answers. Commit them to git — teammates get the context automatically.
 
 ---
 
@@ -71,7 +71,9 @@ claude
 | `/ship-it` | Sync, test, commit, push, PR | 1-2 min |
 | `/qa-check` | Verify output with evidence | 3-5 min |
 | `/retro` | What went well, what to improve | 5-10 min |
+| `/start` | Smart entry point — detects state, guides next step | — |
 | `/compact` | Session too long? Save state, start fresh | 1 min |
+| `/skill-audit` | Detect overlapping skills, clean up conflicts | 2-3 min |
 
 ### When You Want Deeper Analysis (via gstack)
 

@@ -3,39 +3,36 @@ Audit all installed skills for overlapping triggers and conflicts.
 ## Preamble (run first)
 
 ```bash
+_scan_skill() {
+  local loc="$1" skill="$2"
+  [ -f "$skill" ] || return
+  local name=$(basename $(dirname "$skill"))
+  local desc=$(head -30 "$skill" | grep -A2 "description" | grep -v "description" | head -1 | sed 's/^[[:space:]]*//')
+  local triggers=$(grep -iE "Triggers?:|Activates? on:" "$skill" | head -1 | sed 's/^[[:space:]]*//')
+  echo "$loc|$name|$desc|$triggers"
+}
+
 echo "=== GLOBAL SKILLS ==="
-for skill in ~/.claude/skills/*/SKILL.md; do
-  [ -f "$skill" ] || continue
-  name=$(basename $(dirname "$skill"))
-  desc=$(head -20 "$skill" | grep -A1 "description" | tail -1 | sed 's/^[[:space:]]*//')
-  triggers=$(grep -i "^[[:space:]]*Trigger" "$skill" | head -1 | sed 's/^[[:space:]]*//')
-  echo "GLOBAL|$name|$desc|$triggers"
-done
+for skill in ~/.claude/skills/*/SKILL.md; do _scan_skill "GLOBAL" "$skill"; done
+
+echo "=== GLOBAL GSTACK SKILLS ==="
+for skill in ~/.claude/skills/gstack/*/SKILL.md; do _scan_skill "GSTACK" "$skill"; done
 
 echo "=== PROJECT SKILLS ==="
-for skill in .claude/skills/*/SKILL.md; do
-  [ -f "$skill" ] || continue
-  name=$(basename $(dirname "$skill"))
-  desc=$(head -20 "$skill" | grep -A1 "description" | tail -1 | sed 's/^[[:space:]]*//')
-  triggers=$(grep -i "^[[:space:]]*Trigger" "$skill" | head -1 | sed 's/^[[:space:]]*//')
-  echo "PROJECT|$name|$desc|$triggers"
-done
+for skill in .claude/skills/*/SKILL.md; do _scan_skill "PROJECT" "$skill"; done
+
+echo "=== PROJECT GSTACK SKILLS ==="
+for skill in .claude/skills/gstack/*/SKILL.md; do _scan_skill "PROJECT-GSTACK" "$skill"; done
 
 echo "=== REPO SKILLS ==="
-for skill in skills/*/SKILL.md; do
-  [ -f "$skill" ] || continue
-  name=$(basename $(dirname "$skill"))
-  desc=$(head -20 "$skill" | grep -A1 "description" | tail -1 | sed 's/^[[:space:]]*//')
-  triggers=$(grep -i "^[[:space:]]*Trigger" "$skill" | head -1 | sed 's/^[[:space:]]*//')
-  echo "REPO|$name|$desc|$triggers"
-done
+for skill in skills/*/SKILL.md; do _scan_skill "REPO" "$skill"; done
 
 echo "=== COMMANDS ==="
 for cmd in ~/.claude/commands/*.md .claude/commands/*.md; do
   [ -f "$cmd" ] || continue
-  name=$(basename "$cmd" .md)
-  desc=$(head -1 "$cmd" | sed 's/^[[:space:]]*//')
-  loc="GLOBAL"
+  local name=$(basename "$cmd" .md)
+  local desc=$(head -1 "$cmd" | sed 's/^[[:space:]]*//')
+  local loc="GLOBAL"
   [[ "$cmd" == .claude/* ]] && loc="PROJECT"
   echo "CMD|$loc|$name|$desc"
 done
@@ -77,9 +74,10 @@ Find keywords that appear in 2+ skills. Classify each overlap:
 If the same skill name exists in both `~/.claude/skills/` and `.claude/skills/`, flag it.
 Project-level takes priority in Claude Code, so global copy is redundant.
 
-### Step 4: Detect Orphan Commands
+### Step 4: Detect Command-Skill Mismatches
 
-Commands in `.claude/commands/` that reference skills not installed.
+Check if any commands share the same name as a skill (potential confusion).
+Check if commands exist in both global and project locations (duplicates).
 
 ### Step 5: Report
 
