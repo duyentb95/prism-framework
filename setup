@@ -166,6 +166,35 @@ interview_project() {
     echo -ne "  ${BOLD}Domain-specific terms?${NC} (term1:definition, term2:definition — or skip): "
     read -r DOMAIN_TERMS
 
+    # Q6: CLAUDE.md template
+    echo ""
+    echo -e "  ${BOLD}CLAUDE.md template:${NC}"
+    echo "    1) Minimal    — quick start, any project"
+    echo "    2) Web App    — frontend + full-stack"
+    echo "    3) API        — REST/GraphQL backend"
+    echo "    4) Data       — ETL, analytics, pipelines"
+    echo "    5) Non-Code   — reports, strategy, docs"
+    echo -ne "  ${BOLD}Choose [1-5]${NC} [1]: "
+    read -r TEMPLATE_CHOICE
+    TEMPLATE_CHOICE="${TEMPLATE_CHOICE:-1}"
+
+    local TEMPLATE_FILE
+    case "$TEMPLATE_CHOICE" in
+        2) TEMPLATE_FILE="claude-web-app.md" ;;
+        3) TEMPLATE_FILE="claude-api-backend.md" ;;
+        4) TEMPLATE_FILE="claude-data-pipeline.md" ;;
+        5) TEMPLATE_FILE="claude-non-code.md" ;;
+        *) TEMPLATE_FILE="claude-minimal.md" ;;
+    esac
+
+    # Generate CLAUDE.md from template with project context
+    sed -e "s|{{PROJECT_NAME}}|${PROJECT_NAME}|g" \
+        -e "s|{{PROJECT_DESCRIPTION}}|${PROJECT_DESC}|g" \
+        -e "s|{{PROJECT_AUDIENCE}}|${PROJECT_AUDIENCE}|g" \
+        -e "s|{{TECH_STACK}}|${TECH_STACK}|g" \
+        "$FRAMEWORK_DIR/templates/$TEMPLATE_FILE" > "$P/CLAUDE.md"
+    log_ok "CLAUDE.md (${TEMPLATE_FILE%.md})"
+
     # Generate CONTEXT_HUB.md
     cat > "$P/.prism/CONTEXT_HUB.md" << CONTEXT_EOF
 # CONTEXT HUB — Shared Project Context
@@ -316,15 +345,13 @@ setup_project() {
 
     [ -d "$P" ] || { log_err "Not found: $P"; return 1; }
 
-    # Core files (don't overwrite existing)
-    for f in CLAUDE.md .claudecodeignore; do
-        if [ ! -f "$P/$f" ]; then
-            cp "$FRAMEWORK_DIR/$f" "$P/$f"
-            log_ok "$f"
-        else
-            log_info "$f exists — skipped"
-        fi
-    done
+    # .claudecodeignore (don't overwrite existing)
+    if [ ! -f "$P/.claudecodeignore" ]; then
+        cp "$FRAMEWORK_DIR/.claudecodeignore" "$P/.claudecodeignore"
+        log_ok ".claudecodeignore"
+    else
+        log_info ".claudecodeignore exists — skipped"
+    fi
 
     # .prism/ — create structure
     local prism_existed=false
@@ -334,11 +361,16 @@ setup_project() {
     done
     log_ok ".prism/ structure"
 
-    # Interview to generate .prism/ content (only for new projects)
+    # Interview to generate CLAUDE.md + .prism/ content (only for new projects)
     if [ "$prism_existed" = false ]; then
         interview_project "$P"
     else
-        log_info ".prism/ content exists — skipped interview"
+        if [ ! -f "$P/CLAUDE.md" ]; then
+            log_info ".prism/ exists but no CLAUDE.md — running interview for CLAUDE.md"
+            interview_project "$P"
+        else
+            log_info "CLAUDE.md + .prism/ exist — skipped interview"
+        fi
     fi
 
     # .claude/settings.json + commands
