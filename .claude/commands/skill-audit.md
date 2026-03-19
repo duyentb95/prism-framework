@@ -1,4 +1,4 @@
-Audit all installed skills for overlapping triggers and conflicts.
+Audit skills for overlapping triggers.
 
 ## Preamble (run first)
 

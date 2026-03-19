@@ -1,4 +1,4 @@
-Socratic brainstorming session. Explore ideas BEFORE committing to a plan.
+Brainstorm ideas before committing to a plan.
 
 Topic: $ARGUMENTS
 

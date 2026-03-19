@@ -1,4 +1,4 @@
-gstack report-only QA. Same methodology as /qa but never fixes anything.
+Report-only QA. Same as /qa, no fixes.
 
 Target: $ARGUMENTS
 

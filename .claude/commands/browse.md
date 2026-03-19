@@ -1,4 +1,4 @@
-gstack headless Chromium browser. Navigate, click, fill forms, screenshot, check console. ~100ms per command.
+Headless browser. Navigate, click, screenshot.
 
 URL or action: $ARGUMENTS
 

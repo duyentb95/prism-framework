@@ -1,4 +1,4 @@
-gstack Senior designer's eye. 80-item audit, letter grades, AI slop detection. Report only — no fixes.
+Design audit. 80-item checklist, report only.
 
 Target: $ARGUMENTS
 

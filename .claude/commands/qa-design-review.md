@@ -1,4 +1,4 @@
-gstack Designer + frontend dev. Same audit as /plan-design-review, then fixes issues with atomic commits.
+Design audit + auto-fix with atomic commits.
 
 Target: $ARGUMENTS
 

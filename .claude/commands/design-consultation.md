@@ -1,4 +1,4 @@
-gstack Design consultant. Create DESIGN.md from scratch with competitive research, font/color preview.
+Design consultant. Create DESIGN.md from scratch.
 
 Topic: $ARGUMENTS
 

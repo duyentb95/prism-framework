@@ -1,4 +1,4 @@
-Smart entry point for PRISM. Detects project state and guides you to the right next step.
+Smart entry point. Detects state, guides next step.
 
 ## Preamble (run first)
 

@@ -1,4 +1,4 @@
-gstack CEO/Founder brain. Full methodology with deep product thinking.
+CEO review. Deep product thinking.
 
 Topic: $ARGUMENTS
 

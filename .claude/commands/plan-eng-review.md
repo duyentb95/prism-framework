@@ -1,4 +1,4 @@
-gstack Tech Lead rigor. Forced diagrams, architecture, data flow, failure modes, test matrix.
+Tech Lead review. Diagrams, architecture, edge cases.
 
 Topic: $ARGUMENTS
 

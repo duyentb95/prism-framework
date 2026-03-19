@@ -1,4 +1,4 @@
-gstack post-ship doc update. Cross-references git diff against README, ARCHITECTURE, CONTRIBUTING, CHANGELOG.
+Post-ship doc update via git diff.
 
 Route to gstack cognitive mode via gstack-bridge.
 → Lazy-load `gstack/document-release/SKILL.md`

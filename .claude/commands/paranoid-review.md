@@ -1,4 +1,4 @@
-Paranoid Staff Engineer mode. Find bugs that pass CI but explode in production.
+Find bugs that pass CI but break production.
 
 Target: $ARGUMENTS
 

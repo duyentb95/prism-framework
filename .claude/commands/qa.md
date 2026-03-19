@@ -1,4 +1,4 @@
-gstack Test → Fix → Verify loop. Diff-aware (auto-detects changed pages). Three tiers: Quick/Standard/Exhaustive.
+Test, fix, verify loop. Diff-aware QA.
 
 Target: $ARGUMENTS
 
