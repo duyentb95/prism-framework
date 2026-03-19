@@ -903,6 +903,10 @@ PRISM (inline)         gstack (deep)                 Knowledge Store
 /document-release →    /doc-release (git diff)    →   .prism/knowledge/
 /qa-check         →    /qa (browser + diff-aware) →   .prism/qa-reports/
 /retro            →    /retro --gstack (metrics)  →   .prism/retros/
+                       /codex (second opinion)    →   .prism/reviews/
+                       /investigate (debug)       →   .prism/knowledge/
+                       /office-hours (brainstorm) →   .prism/designs/
+                       /careful, /freeze, /guard  →   (session-scoped, no output)
 ```
 
 ### DESIGN.md Integration
@@ -910,7 +914,7 @@ PRISM (inline)         gstack (deep)                 Knowledge Store
 Nếu `DESIGN.md` tồn tại (từ `/design-consultation` hoặc `/plan-design-review`):
 - Đọc trước MỌI quyết định UI/visual
 - Deviations từ design system = severity cao hơn trong QA
-- `/qa-design-review` check rendered site against DESIGN.md
+- `/design-review` check rendered site against DESIGN.md
 
 ### gstack Output → .prism/ Integration
 
@@ -924,8 +928,12 @@ Mọi gstack output PHẢI được lưu vào .prism/ knowledge system:
 /retro analysis   → .prism/retros/retro_{sprint}_{date}.md
 /retro lessons    → .prism/knowledge/GOTCHAS.md (append)
 /design-consult.  → DESIGN.md (project root)
-/design-review    → .prism/qa-reports/design-audit_{date}.md
+/design-review    → .prism/qa-reports/design-review_{date}.md
+/plan-design-rev  → .prism/qa-reports/design-audit_{date}.md
 /doc-release      → .prism/knowledge/RULES.md (append)
+/codex            → .prism/reviews/codex_{date}.md
+/investigate      → .prism/knowledge/GOTCHAS.md (append)
+/office-hours     → .prism/designs/office-hours_{topic}_{date}.md
 ```
 
 Nếu gstack output > 5K tokens → chạy context-compactor trước khi lưu.

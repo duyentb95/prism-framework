@@ -85,6 +85,13 @@ claude
 | `/ship` | Full ship automation (version bump, PR) |
 | `/qa` | Diff-aware browser testing |
 | `/browse [url]` | Headless browser (~100ms) |
+| `/codex` | Multi-AI second opinion (OpenAI Codex) |
+| `/investigate` | Systematic root-cause debugging |
+| `/office-hours` | YC Office Hours — startup diagnostic |
+| `/careful` | Destructive command warnings |
+| `/freeze` / `/unfreeze` | Directory-scoped edit lock |
+| `/guard` | Maximum safety mode |
+| `/design-review` | Design audit + auto-fix |
 
 ---
 
