@@ -12,7 +12,8 @@
 # Usage:
 #   ./setup                          # Full: global + current dir
 #   ./setup --project /path/to/proj  # Add to existing project
-#   ./setup --update                 # Update gstack to latest
+#   ./setup --update                 # Update gstack + relink all projects
+#   ./setup --relink [/path]         # Refresh symlinks for a project (or cwd)
 #   ./setup --uninstall              # Remove everything
 #   ./setup --status                 # Check what's installed
 # ============================================================
@@ -36,6 +37,93 @@ log_ok()    { echo -e "  ${GREEN}✓${NC} $1"; }
 log_warn()  { echo -e "  ${YELLOW}⚠${NC} $1"; }
 log_err()   { echo -e "  ${RED}✗${NC} $1"; }
 log_info()  { echo -e "  ${BLUE}ℹ${NC} $1"; }
+
+PRISM_SHARED="$HOME/.prism"
+
+# ============================================================
+# Shared location: ~/.prism/ (symlink source for all projects)
+# ============================================================
+
+populate_prism_shared() {
+    log_step "Populating ~/.prism/ shared commands..."
+    mkdir -p "$PRISM_SHARED/commands"
+
+    # Copy commands to shared location
+    if [ -d "$FRAMEWORK_DIR/.claude/commands" ]; then
+        cp "$FRAMEWORK_DIR/.claude/commands"/*.md "$PRISM_SHARED/commands/" 2>/dev/null || true
+    fi
+
+    # Write version
+    local ver
+    ver=$(git -C "$FRAMEWORK_DIR" describe --tags 2>/dev/null || git -C "$FRAMEWORK_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    echo "$ver" > "$PRISM_SHARED/version"
+
+    local cmd_count
+    cmd_count=$(ls "$PRISM_SHARED/commands"/*.md 2>/dev/null | wc -l | tr -d ' ')
+    log_ok "~/.prism/commands/ refreshed ($cmd_count commands, version: $ver)"
+}
+
+relink_project() {
+    local P="$1"
+    [ -d "$P/.claude/commands" ] || { mkdir -p "$P/.claude/commands"; }
+
+    local linked=0 skipped=0
+
+    # Create symlinks for each PRISM command
+    for f in "$PRISM_SHARED/commands"/*.md; do
+        [ -f "$f" ] || continue
+        local base
+        base=$(basename "$f")
+        local target="$P/.claude/commands/$base"
+
+        # Skip if real file (custom project command) — don't overwrite
+        if [ -f "$target" ] && [ ! -L "$target" ]; then
+            skipped=$((skipped + 1))
+            continue
+        fi
+
+        ln -sf "$f" "$target"
+        linked=$((linked + 1))
+    done
+
+    # Remove stale symlinks (command deleted from PRISM)
+    for f in "$P/.claude/commands"/*.md; do
+        [ -L "$f" ] || continue
+        local link_target
+        link_target=$(readlink "$f")
+        if [ ! -f "$link_target" ]; then
+            rm "$f"
+            log_info "  Removed stale: $(basename "$f")"
+        fi
+    done
+
+    log_ok "$(basename "$P"): $linked linked, $skipped custom preserved"
+}
+
+register_project() {
+    local P="$1"
+    local REG="$PRISM_SHARED/projects.list"
+    mkdir -p "$PRISM_SHARED"
+    touch "$REG"
+    grep -qxF "$P" "$REG" 2>/dev/null || echo "$P" >> "$REG"
+}
+
+relink_all_projects() {
+    local REG="$PRISM_SHARED/projects.list"
+    [ -f "$REG" ] || return 0
+
+    log_step "Relinking registered projects..."
+    while IFS= read -r proj || [ -n "$proj" ]; do
+        [ -z "$proj" ] && continue
+        if [ -d "$proj" ]; then
+            relink_project "$proj"
+            # Update .prism-source marker
+            echo "prism-playbook $(cat "$PRISM_SHARED/version" 2>/dev/null || echo 'unknown')" > "$proj/.prism-source" 2>/dev/null || true
+        else
+            log_warn "Skipped (not found): $proj"
+        fi
+    done < "$REG"
+}
 
 # ============================================================
 # Step 1: Ensure vendor/gstack exists
@@ -378,12 +466,20 @@ setup_project() {
     [ ! -f "$P/.claude/settings.json" ] && cp "$FRAMEWORK_DIR/.claude/settings.json" "$P/.claude/settings.json"
     log_ok ".claude/settings.json"
 
-    # Slash commands
-    if [ -d "$FRAMEWORK_DIR/.claude/commands" ]; then
+    # Slash commands — symlink from ~/.prism/commands/
+    if [ -d "$PRISM_SHARED/commands" ]; then
+        relink_project "$P"
+    elif [ -d "$FRAMEWORK_DIR/.claude/commands" ]; then
+        # Fallback: copy if ~/.prism/ not populated yet
         cp "$FRAMEWORK_DIR/.claude/commands"/*.md "$P/.claude/commands/" 2>/dev/null || true
-        local cmd_count=$(ls "$P/.claude/commands"/*.md 2>/dev/null | wc -l | tr -d ' ')
-        log_ok ".claude/commands/ ($cmd_count slash commands)"
+        log_ok ".claude/commands/ (copied — run ./setup to enable symlinks)"
     fi
+
+    # Register project for auto-relink on updates
+    register_project "$P"
+
+    # Source marker
+    echo "prism-playbook $(cat "$PRISM_SHARED/version" 2>/dev/null || echo 'unknown')" > "$P/.prism-source" 2>/dev/null || true
 
     # Vendor gstack into project?
     echo ""
@@ -421,6 +517,8 @@ update_all() {
     fi
 
     install_global
+    populate_prism_shared
+    relink_all_projects
     log_ok "Update complete"
 }
 
@@ -446,6 +544,40 @@ check_status() {
     for s in plan-ceo-review plan-eng-review review ship browse qa retro setup-browser-cookies document-release; do
         [ -L "$GLOBAL_SKILLS/$s" ] && log_ok "/$s" || log_warn "/$s"
     done
+
+    echo -e "\n  ${BOLD}Shared (~/.prism/):${NC}"
+    if [ -f "$PRISM_SHARED/version" ]; then
+        log_ok "version: $(cat "$PRISM_SHARED/version")"
+    else
+        log_warn "~/.prism/version (run ./setup to initialize)"
+    fi
+    if [ -d "$PRISM_SHARED/commands" ]; then
+        local shared_count
+        shared_count=$(ls "$PRISM_SHARED/commands"/*.md 2>/dev/null | wc -l | tr -d ' ')
+        log_ok "commands/ ($shared_count files)"
+    else
+        log_warn "~/.prism/commands/ (run ./setup to initialize)"
+    fi
+
+    if [ -f "$PRISM_SHARED/projects.list" ]; then
+        local proj_count
+        proj_count=$(wc -l < "$PRISM_SHARED/projects.list" | tr -d ' ')
+        log_ok "projects.list ($proj_count registered)"
+        echo -e "\n  ${BOLD}Registered projects:${NC}"
+        while IFS= read -r proj || [ -n "$proj" ]; do
+            [ -z "$proj" ] && continue
+            if [ -d "$proj/.claude/commands" ]; then
+                local sym real
+                sym=$(find "$proj/.claude/commands" -maxdepth 1 -type l -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+                real=$(find "$proj/.claude/commands" -maxdepth 1 -not -type l -name "*.md" -not -type d 2>/dev/null | wc -l | tr -d ' ')
+                log_ok "$(basename "$proj"): $sym linked, $real custom"
+            else
+                log_warn "$(basename "$proj"): not found"
+            fi
+        done < "$PRISM_SHARED/projects.list"
+    else
+        log_info "No projects registered yet (run ./setup --project /path)"
+    fi
 
     echo -e "\n  ${BOLD}Tools:${NC}"
     command -v claude &>/dev/null && log_ok "Claude Code" || log_warn "Claude Code"
@@ -504,15 +636,17 @@ print_summary() {
 echo -e "\n${BOLD}PRISM — Setup v2${NC}"
 
 case "${1:-}" in
-    --project)   setup_project "$(cd "${2:-.}" && pwd)"; print_summary ;;
+    --project)   populate_prism_shared; setup_project "$(cd "${2:-.}" && pwd)"; print_summary ;;
     --update)    update_all ;;
+    --relink)    populate_prism_shared; relink_project "$(cd "${2:-.}" && pwd)" ;;
     --status)    check_status ;;
     --uninstall) uninstall_all ;;
     --help|-h)
         echo -e "\nUsage: ./setup [option]\n"
         echo "  (no args)                Full install: global + current dir"
         echo "  --project /path          Add playbook to existing project"
-        echo "  --update                 Update gstack to latest"
+        echo "  --update                 Update gstack + relink all projects"
+        echo "  --relink [/path]         Refresh symlinks for a project (or cwd)"
         echo "  --status                 Check installation status"
         echo "  --uninstall              Remove all global installs"
         echo "  --help                   Show this help"
@@ -524,6 +658,7 @@ case "${1:-}" in
         command -v bun &>/dev/null && log_ok "Bun" || log_warn "Bun not found (for /browse)"
         init_vendor
         install_global
+        populate_prism_shared
         setup_project "$(pwd)"
         print_summary
         ;;
