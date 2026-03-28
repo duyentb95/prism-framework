@@ -9,5 +9,3 @@ Retro Analyst mode. Sprint / weekly retrospective.
 7. Compare with previous retro (if exists): trend up or down?
 
 Save to `.prism/retros/retro_{sprint}_{date}.md`
-
-For gstack deep retro with commit analysis, use `/retro --gstack` instead.

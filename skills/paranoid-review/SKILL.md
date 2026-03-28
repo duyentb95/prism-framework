@@ -7,7 +7,7 @@ description: |
   Fix-First: auto-fixes obvious issues, asks for ambiguous ones.
   Triggers: paranoid review, pre-ship check, security review, what will break,
   production readiness, pre-merge review, find bugs.
-  When gstack /review available, can delegate for deeper analysis.
+  Uses .claude/skills/code-review/ for deep analysis when needed.
 allowed-tools:
   - Read
   - Write
@@ -233,25 +233,7 @@ Priority levels:
 
 ---
 
-## Step 4: gstack Delegation Check
-
-After completing both passes:
-
-```
-If gstack /review skill is available (check .claude/skills/gstack/review/):
-  → Inform the user:
-    "PRISM paranoid review complete. gstack /review is available for deeper analysis
-     (SQL safety audit, Greptile auto-triage, auto-fix loop). Run it?"
-
-If gstack is not available:
-  → Skip this step. PRISM-native review is sufficient.
-```
-
-Do not auto-invoke gstack. Let the user decide.
-
----
-
-## Step 5: Write Review Report
+## Step 4: Write Review Report
 
 Compile all findings into the report below. Save to `.prism/qa-reports/review_{date}.md`.
 

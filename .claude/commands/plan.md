@@ -16,3 +16,13 @@ Shortcuts:
 - If user said `--skip-brainstorm` → skip questions, go straight to design
 - If user said `--skip-ceo` → skip CEO review
 - If user said `--eng-only` → only do Eng review + plan
+
+## Gate Integration
+
+After user says `GO` or `CONFIRMED` and tasks are written to MASTER_PLAN.md:
+
+1. If `.prism/GATE_STATUS.md` exists, replace `- [ ] plan-approved` with:
+   ```
+   - [x] plan-approved (<today's date>) — <N> tasks approved
+   ```
+2. If `.prism/GATE_STATUS.md` doesn't exist, create it from `.prism-template/GATE_STATUS.md` format, then mark plan-approved.

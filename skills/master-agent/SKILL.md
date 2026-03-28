@@ -5,8 +5,8 @@ description: |
   PRISM Master Orchestrator. Plans, decomposes, delegates, reviews, and routes.
   Activates on: initialize, plan, break down, sprint, delegate, review tasks,
   assign work, check status, what's next, morning briefing.
-  Routes gstack commands: /review, /ship, /qa, /browse, /retro, /plan-ceo-review,
-  /plan-eng-review, /plan-design-review, /doc-release, /design-consultation.
+  Routes to local skills: /review, /ship, /investigate, /ceo-review,
+  /eng-review, /doc-release, /careful, /freeze, /guard.
   This agent PLANS, DELEGATES, and ROUTES. It does not implement.
 allowed-tools:
   - Read
@@ -27,7 +27,13 @@ _PRISM=$([ -d ".prism" ] && echo "true" || echo "false")
 _HAS_PLAN=$([ -f ".prism/MASTER_PLAN.md" ] && echo "true" || echo "false")
 _HAS_STAGING=$([ -f ".prism/STAGING.md" ] && echo "true" || echo "false")
 _HAS_CLAUDE=$([ -f "CLAUDE.md" ] && echo "true" || echo "false")
+_HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
+_GATE_PLAN=$(grep -c '\[x\] plan-approved' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+_GATE_CEO=$(grep -c '\[x\] ceo-locked' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+_GATE_ENG=$(grep -c '\[x\] eng-locked' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+_GATE_GSD=$(grep -c 'GSD_BYPASS' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
 echo "BRANCH: $_BRANCH | PRISM: $_PRISM | PLAN: $_HAS_PLAN | STAGING: $_HAS_STAGING | CLAUDE.md: $_HAS_CLAUDE"
+echo "GATES: plan=$_GATE_PLAN ceo=$_GATE_CEO eng=$_GATE_ENG gsd=$_GATE_GSD"
 ```
 
 If `_PRISM` is `false`: this project hasn't been initialized yet. Suggest running `/init-prism` first.
@@ -71,7 +77,7 @@ Determine what kind of work this is:
 | Bug fix, typo, small config change | **GSD** | Do it yourself, < 15 min |
 | Feature request, new module, architecture change | **Plan** | Decompose → delegate |
 | "Review TASK_NNN" / sub-agent output came back | **Review** | Check output vs DoD |
-| gstack command (`/review`, `/ship`, `/qa`, etc.) | **Route** | Lazy-load via gstack-bridge |
+| Skill command (`/review`, `/ship`, `/investigate`, etc.) | **Route** | Load local skill from .claude/skills/ |
 | "Compact context" / session is long | **Compact** | Write STAGING.md |
 | "What's the status" / "What's next" | **Status** | Read MASTER_PLAN, report |
 
@@ -177,33 +183,52 @@ When user says "Compact context" or conversation is getting long:
 
 ---
 
-## Step 9: gstack Command Routing
+## Step 8.5: Gate Enforcement
 
-gstack provides 12+ specialized execution modes. Route to them via the
-gstack-bridge skill (`skills/gstack-bridge/SKILL.md`).
-
-### Priority 1: Exact Command Match (highest priority — route immediately)
+When GATE_STATUS.md exists, enforce the gate flow before routing to skills:
 
 ```
-/plan-ceo-review     → Read gstack/plan-ceo-review/SKILL.md, execute
-/plan-eng-review     → Read gstack/plan-eng-review/SKILL.md, execute
-/plan-design-review  → Read gstack/plan-design-review/SKILL.md, execute
-/qa-design-review    → Read gstack/qa-design-review/SKILL.md, execute
-/design-consultation → Read gstack/design-consultation/SKILL.md, execute
-/review              → Read gstack/review/SKILL.md + checklist.md, execute
-/ship                → Read gstack/ship/SKILL.md + checklist.md, execute
-/qa                  → Read gstack/qa/SKILL.md, execute
-/qa-only             → Read gstack/qa-only/SKILL.md, execute
-/browse [url]        → Read gstack/browse/SKILL.md, execute
-/retro (gstack)      → Read gstack/retro/SKILL.md, execute
-/doc-release (gstack)→ Read gstack/document-release/SKILL.md, execute
-/setup-browser-cookies → Read gstack/setup-browser-cookies/SKILL.md, execute
-/gstack-upgrade      → Read gstack/gstack-upgrade/SKILL.md, execute
+Flow: /plan → /ceo-review → /eng-review → [implement] → /review → /ship
+
+Gate checks (SOFT — warn but allow override):
+- /ceo-review requested but plan-approved=0 → "Run /plan first?"
+- /eng-review requested but ceo-locked=0 → "Run /ceo-review first?"
+- /ship requested but eng-locked=0 and GSD_BYPASS=0 → "Run /eng-review first?"
+
+No gate needed for:
+- /plan (first step — always allowed)
+- /gsd (explicitly bypasses gates)
+- /review, /investigate, /doc-release (can run anytime)
+- /brainstorm, /compact, /status, /retro (utility commands)
 ```
 
-When routing: read gstack-bridge SKILL.md first for path resolution + token rules.
+When warning about a missing gate, always include the current gate status summary from the preamble.
 
-### Priority 2: Intent Detection (suggest gstack command)
+---
+
+## Step 9: Command Routing (Local Skills)
+
+All execution skills are built-in at `.claude/skills/`. No external dependencies.
+
+### Exact Command Match (highest priority — route immediately)
+
+```
+/ceo-review          → Load .claude/skills/ceo-review/SKILL.md, execute
+/plan-ceo-review     → Load .claude/skills/ceo-review/SKILL.md, execute
+/eng-review          → Load .claude/skills/eng-review/SKILL.md, execute
+/plan-eng-review     → Load .claude/skills/eng-review/SKILL.md, execute
+/review              → Load .claude/skills/code-review/SKILL.md, execute
+/ship                → Load .claude/skills/ship/SKILL.md, execute
+/investigate         → Load .claude/skills/investigate/SKILL.md, execute
+/doc-release         → Load .claude/skills/document-release/SKILL.md, execute
+/document-release    → Load .claude/skills/document-release/SKILL.md, execute
+/careful             → Load .claude/skills/safety/SKILL.md, execute (careful mode)
+/freeze              → Load .claude/skills/safety/SKILL.md, execute (freeze mode)
+/guard               → Load .claude/skills/safety/SKILL.md, execute (guard mode)
+/unfreeze            → Load .claude/skills/safety/SKILL.md, execute (unfreeze)
+```
+
+### Intent Detection (suggest command)
 
 ```
 "review my code" / "check the diff" / "pre-merge check"
@@ -212,69 +237,57 @@ When routing: read gstack-bridge SKILL.md first for path resolution + token rule
 "ship it" / "create a PR" / "push this" / "land this"
   → "I'll run the ship workflow. Running /ship..."
 
-"test the site" / "QA this" / "check for bugs" / "smoke test"
-  → "I'll run QA testing. /qa --quick or full /qa?"
-
-"how does it look" / "design check" / "is this good design"
-  → "I can audit the design. /plan-design-review (report) or /qa-design-review (report + fixes)?"
-
 "what did we ship" / "weekly update" / "retro" / "velocity"
   → "I'll generate a retrospective. Running /retro..."
 
 "is this the right thing to build" / "challenge this plan"
-  → "I can review the plan with a CEO lens. Running /plan-ceo-review..."
+  → "I can review the plan with a CEO lens. Running /ceo-review..."
 
 "lock the architecture" / "technical review" / "eng review"
-  → "I'll lock the technical design. Running /plan-eng-review..."
+  → "I'll lock the technical design. Running /eng-review..."
+
+"debug this" / "why is this broken" / "trace this error"
+  → "I'll investigate. Running /investigate..."
+
+"update the docs" / "sync documentation"
+  → "I'll update docs to match what shipped. Running /doc-release..."
 ```
 
-### Priority 3: PRISM-First (do NOT route to gstack)
+### PRISM-Native Commands (no skill file needed)
 
 ```
-"brainstorm" / "ideate" / "let's explore"  → PRISM /brainstorm
-"write a PRD" / "user stories"              → PRISM planning
-"compress context" / "save state"           → PRISM context-compactor
-"what's the plan" / "project overview"      → PRISM knowledge-spine / /status
-"plan this" / "break this down"             → PRISM /plan
+"brainstorm" / "ideate" / "let's explore"  → /brainstorm
+"write a PRD" / "user stories"              → /plan
+"compress context" / "save state"           → /compact
+"what's the plan" / "project overview"      → /status
+"plan this" / "break this down"             → /plan
+"quick fix" / "just do it"                  → /gsd
 ```
 
-### Priority 4: Handoff Patterns (PRISM → suggest gstack)
-
-After PRISM planning phase completes naturally, suggest gstack for execution:
+### Handoff Patterns (suggest next step after completion)
 
 ```
 After /brainstorm or /plan complete:
-  → "Plan complete. Want me to /plan-ceo-review to validate product direction?"
+  → "Plan complete. Want me to /ceo-review to validate product direction?"
 
 After CEO review lock:
-  → "Product direction locked. Want me to /plan-eng-review for architecture?"
+  → "Product direction locked. Want me to /eng-review for architecture?"
 
 After implementation complete:
   → "Code done. Ready to /review and /ship?"
 
-After /ship-it complete:
-  → "Shipped. Want me to /qa the staging site?"
-
-After /qa pass:
-  → "QA passed. Want me to /doc-release to update docs?"
+After /ship complete:
+  → "Shipped. Want me to /doc-release to update docs?"
 
 After sprint complete:
   → "Sprint done. Run /retro?"
 ```
 
-### gstack Routing Rules
+### Routing Rules
 
-1. **Lazy load only**: Read gstack-bridge SKILL.md first, then target SKILL.md
-2. **One at a time**: Never load 2 gstack SKILL.md files simultaneously
-3. **Output integration**: After gstack workflow → save results to .prism/ (see gstack-bridge for mapping)
-4. **Preamble once**: gstack preamble bash block runs once per session, skip on subsequent commands
-5. **Browser**: Use `/browse` for all web interaction. NEVER use `mcp__claude-in-chrome__*` tools
-
-### Session-Aware Routing
-
-If gstack preamble reports `_SESSIONS >= 3` (user has multiple windows):
-- Every question includes project name, branch, and current task
-- Re-ground the user before presenting options
+1. **Local only**: All skills live in `.claude/skills/` — no external loading
+2. **One at a time**: Never load 2 SKILL.md files simultaneously
+3. **Output integration**: After skill workflow → save results to .prism/
 
 ---
 
@@ -364,15 +377,15 @@ Every error case below specifies: **Detection** (how to spot it), **Impact** (wh
 |  | 2. If output is partially usable → mark task `DONE_WITH_CONCERNS`, list specific gaps, re-dispatch same task with clarified brief |
 |  | 3. If output is unusable → mark task `BLOCKED`, rewrite task brief with more explicit instructions + sample output, dispatch fresh sub-agent |
 
-### ERR-04: gstack Not Installed When Routing to gstack Command
+### ERR-04: Skill SKILL.md Missing
 
 | Aspect | Detail |
 |--------|--------|
-| **Detection** | gstack-bridge SKILL.md not found at `$PROJECT_ROOT/.claude/skills/gstack/` or `$HOME/.claude/skills/gstack/` |
-| **Impact** | Cannot execute /review, /ship, /qa, /browse, /retro, or any gstack workflow |
-| **Fallback** | 1. Inform user: "gstack is not installed. I can still handle this with PRISM's built-in capabilities (reduced feature set)." |
-|  | 2. For critical commands (/review, /ship): execute a simplified inline version using PRISM checklist logic |
-|  | 3. Offer installation: "Run `npx gstack-setup` or manually clone gstack into `.claude/skills/gstack/`" |
+| **Detection** | `Read .claude/skills/{name}/SKILL.md` returns file-not-found |
+| **Impact** | Cannot execute the requested skill workflow |
+| **Fallback** | 1. Check if skill exists under a different name (e.g., `code-review` vs `review`) |
+|  | 2. Execute a simplified inline version using PRISM's core logic |
+|  | 3. AskUserQuestion: "Skill `{name}` is missing. Was it removed? I can handle this manually." |
 
 ### ERR-05: Git Not Initialized
 
@@ -594,7 +607,7 @@ For ANY critical operation in the Master-Agent workflow, follow this 3-step chai
 |-----------|-------------------|--------------------|--------------------|
 | Read CONTEXT_HUB | `Read .prism/CONTEXT_HUB.md` | Infer context from README + package.json | Ask user to describe project context |
 | Read MASTER_PLAN | `Read .prism/MASTER_PLAN.md` | Reconstruct from `.prism/tasks/` directory | Ask user for current priorities |
-| Route gstack command | Load gstack-bridge SKILL.md | Execute simplified inline version | Tell user gstack is needed, offer install instructions |
+| Route skill command | Load .claude/skills/{name}/SKILL.md | Execute simplified inline version | Ask user if skill was removed or renamed |
 | Verify task output | Diff against DoD checklist | Read sub-agent's "Brief for Master" section | Ask user to manually verify the output |
 | Get git branch | `git branch --show-current` | `git rev-parse --abbrev-ref HEAD` | Ask user: "What branch should I work on?" |
 | Dispatch sub-agent | Create task brief + context file | Create combined single-file brief (no separate context) | Ask user to manually create the session |
@@ -605,7 +618,7 @@ For ANY critical operation in the Master-Agent workflow, follow this 3-step chai
 The chain applies to these categories of operations:
 
 1. **File reads** that are required for planning (CONTEXT_HUB, MASTER_PLAN, DICTIONARY, STAGING)
-2. **Tool invocations** that may fail (git, gstack routing, file system operations)
+2. **Tool invocations** that may fail (git, skill routing, file system operations)
 3. **Sub-agent integration** (dispatching, reviewing output, extracting knowledge)
 4. **State transitions** (marking tasks done, updating plans, compacting context)
 

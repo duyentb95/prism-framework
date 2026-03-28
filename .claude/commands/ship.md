@@ -1,4 +1,5 @@
 Automated ship. Test, version, commit, push, PR.
 
-Route to gstack cognitive mode via gstack-bridge.
-→ Lazy-load `gstack/ship/SKILL.md` + `gstack/review/checklist.md`
+$ARGUMENTS
+
+Load and execute `.claude/skills/ship/SKILL.md`.

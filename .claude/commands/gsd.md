@@ -7,3 +7,10 @@ For tasks < 15 minutes:
 2. Commit changes
 3. Report what was done
 4. Update `.prism/knowledge/` if anything new was learned
+
+## Gate Bypass
+
+/gsd bypasses the full gate flow. After completion, if `.prism/GATE_STATUS.md` exists, append to the `## GSD Log` section:
+```
+- GSD_BYPASS (<today's date>) — <1-line task description>
+```

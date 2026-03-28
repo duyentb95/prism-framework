@@ -50,19 +50,25 @@
 
 Type `/start` to begin -- it detects your project state and guides you.
 
+### Gate Flow (enforced for complex tasks)
+```
+/plan → /ceo-review → /eng-review → implement → /review → /ship
+```
+Each gate must pass before the next. `/gsd` bypasses all gates for quick tasks.
+
 ### Quick Reference
-- Think:   /brainstorm, /ceo-review, /eng-review
+- Think:   /brainstorm, /office-hours, /ceo-review, /eng-review
 - Plan:    /plan -> GO
 - Build:   /gsd (quick) or sub-agents (complex)
-- Check:   /paranoid-review, /qa-check
-- Ship:    /ship-it, /document-release
+- Check:   /paranoid-review, /qa-check, /qa-only
+- Ship:    /ship, /document-release
 - Learn:   /retro
 - Context: /start, /status, /compact, /adhoc
 
 ### Rules
 - NEVER jump straight to code. Ask WHY first, design, then plan.
-- Complex tasks: /plan -> wait for GO -> execute.
-- Quick tasks (< 15 min): /gsd -- no planning needed.
+- Complex tasks: /plan -> wait for GO -> execute through gate flow.
+- Quick tasks (< 15 min): /gsd -- no planning needed, gates bypassed.
 - Long sessions: /compact to save state, resume in fresh session.
 - Knowledge: append to .prism/knowledge/ when you learn something new.
 

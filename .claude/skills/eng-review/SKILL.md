@@ -11,11 +11,17 @@ tools: ["Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion"]
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 _HAS_PLAN=$([ -f ".prism/MASTER_PLAN.md" ] && echo "true" || echo "false")
 _HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
+_CEO_GATE=$(grep -c '\[x\] ceo-locked' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+echo "BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE | CEO_GATE: $_CEO_GATE"
 ```
 
-Report: `BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE`
-
 If `_HAS_PLAN` is false, warn: "No MASTER_PLAN.md found. Run /plan first or point me to the plan file."
+
+### Gate Check
+
+If `_HAS_GATE` is `true` and `_CEO_GATE` is `0`:
+- WARN: "CEO review gate hasn't been passed yet. Run /ceo-review first to validate product direction, or proceed anyway?"
+- This is a SOFT gate — warn but allow the user to override.
 
 ## AskUserQuestion Format
 
@@ -162,19 +168,19 @@ Display this summary so the user sees all findings at a glance:
 
 ## Gate Integration
 
-After the Completion Summary, write to `.prism/GATE_STATUS.md`.
+After the Completion Summary, update `.prism/GATE_STATUS.md`:
 
-If the file exists, append. If not, create it. Add this line:
+1. If 0 critical gaps — replace `- [ ] eng-locked` with:
+   ```
+   - [x] eng-locked (<today's date>) — architecture locked
+   ```
 
-```
-- [x] eng-review (<today's date>) — architecture locked
-```
+2. If critical gaps remain — replace `- [ ] eng-locked` with:
+   ```
+   - [ ] eng-locked (<today's date>) — {N} critical gaps remain
+   ```
 
-Only write the gate if the review completed with 0 critical gaps. If there are critical gaps, write instead:
-
-```
-- [ ] eng-review (<today's date>) — {N} critical gaps remain
-```
+3. If GATE_STATUS.md doesn't exist, create it from the template format (see `.prism-template/GATE_STATUS.md`).
 
 ## Unresolved Decisions
 

@@ -5,7 +5,7 @@ description: |
   PRISM QA Engineer. Verifies output quality with evidence-based checklists.
   Triggers: qa check, verify output, test this, smoke test, check quality,
   does it work, validate, QA report.
-  Works without browser. When gstack /qa available, delegates deep testing.
+  Works without browser. Provides manual test steps for web apps.
   This agent VERIFIES. It does not implement or fix.
 allowed-tools:
   - Read
@@ -75,11 +75,6 @@ Before checking anything, establish what you are verifying:
    | HIGH | Public API change, auth/payment, data migration, breaking change | Full checklist + manual evidence |
    | MEDIUM | New feature, new integration, schema change | Full checklist |
    | LOW | Internal refactor, docs update, config tweak | Quick checklist (critical items only) |
-
-4. **gstack delegation check (early exit):**
-   If output is a web app/site AND gstack `/qa` is available:
-   -> Suggest: "Browser testing available via gstack. Run /qa for diff-aware browser testing?"
-   -> If user agrees -> hand off to gstack-bridge, stop here
 
 ---
 
@@ -216,27 +211,18 @@ IMPACT: [What breaks if this ships as-is]
 
 ---
 
-## Step 4: gstack Delegation Check
+## Step 4: Browser Testing Note
 
-After completing your non-browser QA:
+If output is a web application/site:
+- Provide manual test steps in the report:
+  1. Open [URL] in browser
+  2. Check [specific page/component]
+  3. Verify [specific behavior]
+  4. Test on mobile viewport (resize to 375px width)
+  5. Check browser console for errors
 
-```
-IF output is a web application/site AND gstack is installed:
-  -> "Browser testing would improve this QA. Run /qa for diff-aware browser testing?"
-  -> If user says yes -> route via gstack-bridge
-  -> Append gstack QA results to your report
-
-IF output is a web application/site AND gstack is NOT available:
-  -> Note in report: "Browser testing skipped (gstack not installed)."
-  -> Provide manual test steps:
-     1. Open [URL] in browser
-     2. Check [specific page/component]
-     3. Verify [specific behavior]
-     4. Test on mobile viewport (resize to 375px width)
-     5. Check browser console for errors
-
-IF output is NOT a web application:
-  -> Skip this step entirely. Note "N/A" in Browser Testing section.
+If output is NOT a web application:
+- Skip this step. Note "N/A" in Browser Testing section.
 ```
 
 ---
@@ -338,7 +324,7 @@ PASSED: [N] | FAILED: [N] | SKIPPED: [N]
 1. [Improvement suggestion]
 
 ## Browser Testing
-[Completed via gstack /qa — see [report path] | Skipped — manual steps listed | N/A]
+[Manual steps listed | N/A]
 
 ### Manual Test Steps (if browser testing skipped)
 1. [Step]

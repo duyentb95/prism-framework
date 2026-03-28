@@ -1,4 +1,4 @@
-Upgrade PRISM to latest version. Pulls prism-playbook from git + updates all registered projects.
+Upgrade PRISM to latest version. Pulls prism-playbook from git + updates current project.
 
 $ARGUMENTS
 
@@ -13,7 +13,7 @@ Run these steps in order:
 
 2. **If LOCAL_REPO** — pull latest:
    ```bash
-   cd "$PRISM_SOURCE" && git pull origin main && git submodule update --init --recursive
+   cd "$PRISM_SOURCE" && git pull origin main
    ```
 
 3. **If NEED_CLONE** — clone from GitHub as fallback:
@@ -24,15 +24,17 @@ Run these steps in order:
    PRISM_SOURCE="$HOME/.prism/source"
    ```
 
-4. **Review before running setup:** Show the user what changed since last update:
+4. **Review before updating:** Show the user what changed:
    ```bash
    cd "$PRISM_SOURCE" && git log --oneline -10
    ```
-   Then **ask the user for confirmation** before proceeding: "These commits will be applied. Run `./setup --update` now?"
+   Ask for confirmation: "These commits will be applied. Update now?"
 
-5. **Only after user confirms** — run update:
+5. **Only after user confirms** — copy updated files:
    ```bash
-   cd "$PRISM_SOURCE" && ./setup --update
+   cp -r "$PRISM_SOURCE/.claude/commands/" .claude/commands/
+   cp -r "$PRISM_SOURCE/.claude/skills/" .claude/skills/
+   cp "$PRISM_SOURCE/.claude/settings.json" .claude/settings.json
    ```
 
-6. **Report what changed:** Show the git log of new commits pulled, count of commands now available, and number of projects relinked.
+6. **Report what changed:** Show git log of new commits pulled and list of updated files.

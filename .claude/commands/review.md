@@ -10,6 +10,5 @@ If argument is a TASK_NNN:
 5. Stage 2: Quality Check — code quality, standards, edge cases
 6. Report: PASS / CONCERNS / FAIL with details
 
-If argument is a file or PR:
-Route to gstack `/review` for deep code review with auto-fix.
-→ Lazy-load `gstack/review/SKILL.md`
+If argument is a file, branch, or PR:
+Load and execute `.claude/skills/code-review/SKILL.md` for deep code review.

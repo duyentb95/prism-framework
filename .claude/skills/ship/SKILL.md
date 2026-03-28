@@ -13,9 +13,19 @@ _HAS_VERSION=$([ -f "VERSION" ] && echo "true" || echo "false")
 _HAS_CHANGELOG=$([ -f "CHANGELOG.md" ] && echo "true" || echo "false")
 _HAS_GH=$(command -v gh &>/dev/null && echo "true" || echo "false")
 _HAS_TESTS=$(ls jest.config.* vitest.config.* .rspec pytest.ini Cargo.toml go.mod mix.exs phpunit.xml 2>/dev/null | head -1)
+_HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
+_ENG_GATE=$(grep -c '\[x\] eng-locked' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+_GSD_BYPASS=$(grep -c 'GSD_BYPASS' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
 echo "BRANCH: $_BRANCH | VERSION: $_HAS_VERSION | CHANGELOG: $_HAS_CHANGELOG | GH_CLI: $_HAS_GH"
+echo "GATE: $_HAS_GATE | ENG_GATE: $_ENG_GATE | GSD: $_GSD_BYPASS"
 [ -n "$_HAS_TESTS" ] && echo "TEST_CONFIG: $_HAS_TESTS" || echo "TEST_CONFIG: none detected"
 ```
+
+### Gate Check
+
+If `_HAS_GATE` is `true` and `_ENG_GATE` is `0` and `_GSD_BYPASS` is `0`:
+- WARN: "Eng review gate hasn't been passed. Run /eng-review first, or proceed anyway?"
+- This is a SOFT gate — warn but allow override. /ship is often run on small changes without full review flow.
 
 Use the preamble output to guide decisions throughout the workflow:
 - If `VERSION: false`, skip Step 4 (version bump)
@@ -464,7 +474,12 @@ Branch pushed. Create a PR manually:
 
 **Output the PR URL** (or manual instructions).
 
-After PR creation, suggest: "Consider running `/document-release` to sync docs."
+After PR creation:
+1. Update `.prism/GATE_STATUS.md` if it exists — replace `- [ ] shipped` with:
+   ```
+   - [x] shipped (<today's date>) — PR #<number> created
+   ```
+2. Suggest: "Consider running `/document-release` to sync docs."
 
 ---
 

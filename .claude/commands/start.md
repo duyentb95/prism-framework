@@ -23,9 +23,7 @@ Based on preamble results, follow ONE of these paths:
 ### Path 1: No PRISM initialized (`_PRISM=false`)
 ```
 "This project doesn't have PRISM set up yet.
- Run this from your prism-playbook directory:
-   ./setup --project $(pwd)
- Then come back and type /start"
+ Run /init-prism to get started."
 ```
 STOP here.
 

@@ -7,7 +7,7 @@ description: |
   Triggers: ship it, push this, land this, deploy, release, merge, go live,
   create PR, push to remote, finalize.
   Works with and without GitHub. Adapts to project type (code, docs, config).
-  When gstack /ship available, delegates for full automation.
+  Delegates to .claude/skills/ship/ for full automation.
 allowed-tools:
   - Read
   - Write
@@ -255,9 +255,7 @@ For each commit:
    -> Ask: "PR already exists. Update description with latest changes?"
    -> If yes -> gh pr edit [number] --body "..."
 
-4. gstack delegation check:
-   If gstack /ship is available -> suggest delegating for full PR automation
-   (labels, reviewers, CI checks, auto-merge rules)
+4. Use `.claude/skills/ship/SKILL.md` for the full automated ship workflow.
 ```
 
 ---

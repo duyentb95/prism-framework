@@ -5,7 +5,7 @@ description: |
   PRISM Sprint Retrospective. Analyzes sprint execution, extracts lessons, identifies trends.
   Triggers: retro, retrospective, what did we accomplish, sprint review, weekly review,
   how did we do, sprint metrics, lessons learned, wrap up sprint.
-  When gstack /retro available, can delegate for commit-level analysis.
+  Uses git log for commit-level analysis and per-contributor breakdown.
 allowed-tools:
   - Read
   - Write
@@ -249,25 +249,7 @@ After extraction, note what was added and to which file.
 
 ---
 
-## Step 7: gstack Delegation Check
-
-```
-If gstack /retro is available (check .claude/skills/gstack/retro/):
-  -> Inform user:
-     "Want to also run gstack /retro for commit-level analysis and per-contributor breakdown?
-      gstack retro adds: commit analysis, file churn heatmap, contributor stats."
-  -> If user agrees -> route via gstack-bridge, append results to retro report
-
-If gstack is not available:
-  -> Skip. Git log analysis provides adequate metrics.
-  -> Note in report: "Detailed commit analysis available if gstack /retro is installed."
-```
-
-Do not auto-invoke gstack. Let the user decide.
-
----
-
-## Step 7.5: Session Detection (Velocity Enrichment)
+## Step 7: Session Detection (Velocity Enrichment)
 
 Analyze git commit timestamps to identify work sessions and patterns:
 

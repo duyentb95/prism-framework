@@ -2,5 +2,4 @@ Maximum safety mode. Combines /freeze (edit restrictions) + /careful (destructiv
 
 $ARGUMENTS
 
-Route to gstack cognitive mode via gstack-bridge.
-→ Lazy-load `gstack/guard/SKILL.md`
+Load and execute `.claude/skills/safety/SKILL.md` in **guard** mode.

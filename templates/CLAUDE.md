@@ -1,16 +1,19 @@
 # CLAUDE.md — {{PROJECT_NAME}}
 
+> Plan -> Review -> Implement -> Ship -> Monitor
+
 ## How to Work
 
 1. **ASK before doing** -- Don't jump to code. Ask: "What are you trying to achieve?"
-2. **Design before build** -- Present the approach section by section. Wait for approval.
+2. **Design before build** -- Present approach section by section. Wait for approval.
 3. **Plan before execute** -- Break complex tasks into micro-tasks. Type GO to start.
-4. **Small tasks -> just do it** -- If < 15 minutes, no planning needed (GSD mode).
+4. **Quick tasks (< 15 min)** -- /gsd, no planning needed.
+5. **Append knowledge** -- After learning something new, append to .prism/knowledge/.
 
 ## Project Context
 
 **What**: {{PROJECT_DESCRIPTION}}
-**Why**: [Why does it exist? What problem does it solve?]
+**Why**: {{PROJECT_WHY}}
 **Who**: {{PROJECT_AUDIENCE}}
 **Stack**: {{TECH_STACK}}
 
@@ -23,6 +26,7 @@ Type `/start` to begin -- it detects your project state and guides you.
 /plan → /ceo-review → /eng-review → implement → /review → /ship
 ```
 Each gate must pass before the next. `/gsd` bypasses all gates for quick tasks.
+Gate status tracked in `.prism/GATE_STATUS.md`.
 
 ### Quick Reference
 - Think:   /brainstorm, /office-hours, /ceo-review, /eng-review
@@ -32,24 +36,28 @@ Each gate must pass before the next. `/gsd` bypasses all gates for quick tasks.
 - Ship:    /ship, /document-release
 - Learn:   /retro
 - Context: /start, /status, /compact, /adhoc
+- Safety:  /careful, /freeze, /guard, /investigate
 
-### Rules
-- NEVER jump straight to code. Ask WHY first, design, then plan.
-- Complex tasks: /plan -> wait for GO -> execute through gate flow.
-- Quick tasks (< 15 min): /gsd -- no planning needed, gates bypassed.
-- Long sessions: /compact to save state, resume in fresh session.
-- Knowledge: append to .prism/knowledge/ when you learn something new.
+## Key Constraints
+
+- All skills are local in `.claude/skills/` -- zero external dependencies
+- All `.prism/` files are git-committable (no secrets, no binary)
+- Templates use `{{PLACEHOLDER}}` syntax filled during /init-prism
+
+## Sub-Agent Protocol
+
+Sub-agents end with: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT.
+Task briefs: `.prism/tasks/TASK_NNN_xxx.md`
+Run: `Read .prism/tasks/TASK_NNN_xxx.md and EXECUTE. Assume I am AFK.`
 
 ## Knowledge
 
-- Read `.prism/knowledge/` before starting -- it contains patterns and traps from previous sessions.
-- After learning something new, append to the appropriate file:
+- Read `.prism/knowledge/` before starting -- patterns and traps from previous sessions.
+- After learning something new, append to:
   - `RULES.md` -- patterns ("always do X when Y")
   - `GOTCHAS.md` -- traps ("don't do Z because...")
   - `TECH_DECISIONS.md` -- architecture choices + reasoning
 
 ## Session Handoff
 
-If the conversation gets long and Claude starts forgetting:
-1. Write current state to `.prism/STAGING.md`
-2. User opens fresh session: `Read .prism/STAGING.md and resume`
+If conversation gets long: run /compact to save state, resume in fresh session.

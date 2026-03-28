@@ -11,7 +11,15 @@ tools: ["Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion"]
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 _HAS_PLAN=$([ -f ".prism/MASTER_PLAN.md" ] && echo "true" || echo "false")
 _HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
+_PLAN_GATE=$(grep -c '\[x\] plan-approved' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
+echo "BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE | PLAN_GATE: $_PLAN_GATE"
 ```
+
+### Gate Check
+
+If `_HAS_GATE` is `true` and `_PLAN_GATE` is `0`:
+- WARN: "The plan gate hasn't been passed yet. Run /plan first to establish the plan, or proceed anyway?"
+- This is a SOFT gate — warn but allow the user to override.
 
 ## AskUserQuestion Format
 
@@ -506,16 +514,12 @@ If any AskUserQuestion goes unanswered, note it here. Never silently default.
 
 ## Gate Integration
 
-After the review is complete and the user approves the final plan, write the gate status:
+After the review is complete and the user approves the final plan:
 
-```bash
-mkdir -p .prism
-DATE=$(date +%Y-%m-%d)
-```
+1. Update `.prism/GATE_STATUS.md` — replace `- [ ] ceo-locked` with:
+   ```
+   - [x] ceo-locked (<today's date>) — score: <SCORE>/10
+   ```
+   Where `<SCORE>`: 10 = zero critical gaps, 9 = minor issues, 7-8 = some gaps, <7 = significant concerns.
 
-Append to `.prism/GATE_STATUS.md`:
-```
-- [x] ceo-review (<DATE>) — score: <SCORE>/10
-```
-
-Where `<SCORE>` is derived from the Completion Summary: 10 = zero critical gaps + zero unresolved decisions, 9 = minor issues only, 7-8 = some gaps addressed, <7 = significant concerns remain.
+2. If GATE_STATUS.md doesn't exist, create it from the template format (see `.prism-template/GATE_STATUS.md`).
