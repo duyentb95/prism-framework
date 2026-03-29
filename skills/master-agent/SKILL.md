@@ -213,6 +213,7 @@ All execution skills are built-in at `.claude/skills/`. No external dependencies
 ### Exact Command Match (highest priority — route immediately)
 
 ```
+/autoplan             → Load .claude/skills/autoplan/SKILL.md, execute
 /ceo-review          → Load .claude/skills/ceo-review/SKILL.md, execute
 /plan-ceo-review     → Load .claude/skills/ceo-review/SKILL.md, execute
 /eng-review          → Load .claude/skills/eng-review/SKILL.md, execute

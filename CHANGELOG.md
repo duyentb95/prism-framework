@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2026-03-29
+
+### Added
+- /autoplan command — one command, fully reviewed plan (CEO → Eng review pipeline with auto-decisions)
+- autoplan skill with 6 decision principles, taste decision surfacing, decision audit trail
+- Passes plan-approved + ceo-locked + eng-locked gates in one command
+
 ## [3.0.0] - 2026-03-28
 
 ### Added
