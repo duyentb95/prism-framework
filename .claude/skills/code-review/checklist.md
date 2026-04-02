@@ -46,6 +46,13 @@ Be terse. For each issue: one line describing the problem, one line with the fix
 - Status transitions that don't use atomic `WHERE old_status = ? UPDATE SET new_status` — concurrent updates can skip or double-apply transitions
 - Unsafe HTML rendering (Rails: .html_safe/raw(); React: dangerouslySetInnerHTML; Vue: v-html; Django: |safe/mark_safe) on user-controlled data (XSS)
 
+#### Shell Injection & Command Execution
+- Python: `subprocess.call/Popen` with `shell=True` and user input in command string. Use `subprocess.run(["cmd", arg])` (list form, no shell).
+- Python: `os.system()`, `os.popen()`, `eval()`, `exec()` with any external data. Replace with safe alternatives.
+- Node: `child_process.exec()` with string concatenation. Use `execFile()` or `spawn()` with array args.
+- Ruby: backticks `` `#{user_input}` ``, `system("cmd #{input}")`. Use `Open3.capture3("cmd", input)`.
+- Any language: user input flowing into shell commands, SQL `EXECUTE`, template rendering (`eval`, `render_template_string`).
+
 #### LLM Output Trust Boundary
 - LLM-generated values (emails, URLs, names) written to DB or passed to mailers without format validation. Add lightweight guards (`EMAIL_REGEXP`, `URI.parse`, `.strip`) before persisting.
 - Structured tool output (arrays, hashes) accepted without type/shape checks before database writes.

@@ -26,8 +26,9 @@ If `_HAS_GATE` is `true` and `_PLAN_GATE` is `0`:
 **ALWAYS follow this structure for every AskUserQuestion call:**
 1. **Re-ground:** State the project, the current branch (use `_BRANCH` from preamble), and the current plan/task. (1-2 sentences)
 2. **Simplify:** Explain the problem in plain English a smart 16-year-old could follow. No jargon.
-3. **Recommend:** `RECOMMENDATION: Choose [X] because [one-line reason]`
-4. **Options:** Lettered options: `A) ... B) ... C) ...`
+3. **Recommend:** `RECOMMENDATION: Choose [X] because [one-line reason]` Include `Completeness: X/10` for each option.
+4. **Effort:** Show both scales for each option: `(human: ~X / CC: ~Y)`
+5. **Options:** Lettered options: `A) ... B) ... C) ...`
 
 Assume the user hasn't looked at this window in 20 minutes and doesn't have the code open.
 
@@ -147,6 +148,22 @@ Analyze the plan. If it involves ANY of: new UI screens/pages, changes to existi
 ### Taste Calibration (EXPANSION and SELECTIVE EXPANSION modes)
 Identify 2-3 files or patterns in the existing codebase that are particularly well-designed. Note them as style references. Also note 1-2 anti-patterns to avoid repeating.
 Report findings before proceeding to Step 0.
+
+### Landscape Check
+
+Before challenging scope, understand the landscape. Use WebSearch (if available) for:
+- "[product category] landscape {current year}"
+- "[key feature] alternatives"
+- "why [incumbent approach] [succeeds/fails]"
+
+If WebSearch is unavailable, skip and note: "Search unavailable — proceeding with in-distribution knowledge only."
+
+Run three-layer synthesis:
+- **Layer 1**: What's the tried-and-true approach in this space?
+- **Layer 2**: What are the search results saying?
+- **Layer 3**: First-principles reasoning — where might conventional wisdom be wrong?
+
+Feed into Premise Challenge (0A) and Dream State Mapping (0C).
 
 ## Step 0: Nuclear Scope Challenge + Mode Selection
 
@@ -414,6 +431,50 @@ Evaluate:
 
 Required ASCII diagram: user flow showing screens/states and transitions.
 **STOP.** AskUserQuestion once per issue. Do NOT proceed until user responds.
+
+## Outside Voice — Independent Plan Challenge
+
+After all 11 review sections are complete, offer an independent second opinion.
+
+Use AskUserQuestion:
+> "All review sections are complete. Want an outside voice? A fresh-context subagent
+> can give an independent challenge — logical gaps, feasibility risks, and blind spots
+> that are hard to catch from inside the review. Takes about 2 minutes."
+>
+> RECOMMENDATION: Choose A — an independent 2nd opinion catches structural blind spots.
+> Completeness: A=9/10, B=7/10.
+
+Options:
+- A) Get the outside voice (recommended)
+- B) Skip — proceed to outputs
+
+**If B:** Skip and continue.
+
+**If A:** Dispatch via the Agent tool. The subagent has fresh context — genuine independence.
+
+Subagent prompt:
+"You are a brutally honest technical reviewer examining a development plan that has
+already been through a multi-section review. Your job is NOT to repeat that review.
+Instead, find what it missed: logical gaps, unstated assumptions, overcomplexity
+(is there a fundamentally simpler approach?), feasibility risks, missing dependencies,
+and strategic miscalibration. Be direct. Be terse. No compliments. Just the problems.
+
+THE PLAN:
+<plan content>"
+
+Present findings under `OUTSIDE VOICE:` header.
+
+**Cross-model tension:** If the outside voice disagrees with earlier sections, flag:
+```
+CROSS-MODEL TENSION:
+  [Topic]: Review said X. Outside voice says Y.
+```
+
+For each tension point, use AskUserQuestion with options: A) Accept outside voice, B) Keep current approach, C) Investigate further.
+
+**User sovereignty:** Never auto-incorporate outside voice recommendations. Present each finding. The user decides.
+
+---
 
 ## CRITICAL RULE — How to ask questions
 * **One issue = one AskUserQuestion call.** Never combine multiple issues into one question.

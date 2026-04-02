@@ -348,7 +348,24 @@ Before producing the final review output:
 
 ---
 
-## Step 5.5: TODOS cross-reference
+## Step 5.5: Adversarial Review Subagent
+
+After Fix-First is complete, dispatch a fresh-context adversarial reviewer:
+
+Dispatch via the Agent tool. Prompt:
+"You are a hostile code reviewer. Run `git diff origin/<base>` to get the diff.
+Your job is to find what the primary reviewer MISSED. Focus on: cross-cutting
+concerns, integration boundary failures, implicit assumptions, and failure modes
+that checklist-based reviews systematically miss. Be terse. Output JSON findings
+same format as specialists."
+
+Merge findings into the review output. Tag as `[ADVERSARIAL]`.
+
+If the subagent fails or times out: skip silently. The adversarial pass is a bonus.
+
+---
+
+## Step 5.6: TODOS cross-reference
 
 Read `TODOS.md` in the repository root (if it exists). Cross-reference the PR against open TODOs:
 

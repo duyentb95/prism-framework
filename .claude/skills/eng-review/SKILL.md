@@ -182,6 +182,36 @@ After the Completion Summary, update `.prism/GATE_STATUS.md`:
 
 3. If GATE_STATUS.md doesn't exist, create it from the template format (see `.prism-template/GATE_STATUS.md`).
 
+## Outside Voice — Independent Architecture Challenge
+
+After all review sections are complete, offer an independent 2nd opinion (same pattern as ceo-review):
+
+Use AskUserQuestion:
+> "Eng review complete. Want a fresh-context subagent to challenge the architecture?
+> Catches structural blind spots. Completeness: A=9/10, B=7/10."
+
+Options: A) Get outside voice (recommended) B) Skip
+
+If A: Dispatch via Agent tool with fresh context. Prompt:
+"You are a senior architect reviewing a technical plan. Find: over-engineering, missing
+failure modes, coupling risks, test gaps, performance bottlenecks, and deployment risks
+the review missed. Be terse. No compliments."
+
+Present findings + cross-model tension points. User decides on each.
+
+---
+
+## Confidence Calibration
+
+For each finding in the review, assign confidence (1-10):
+- **8-10**: Include normally
+- **5-7**: Include with caveat: "Verify — moderate confidence"
+- **1-4**: Suppress to appendix
+
+This prevents low-confidence findings from cluttering the review and wasting user decisions.
+
+---
+
 ## Unresolved Decisions
 
 If the user does not respond to an AskUserQuestion or interrupts to move on, note which decisions were left unresolved. At the end, list these as "Unresolved decisions that may bite you later" — never silently default to an option.
