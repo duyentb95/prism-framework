@@ -13,6 +13,7 @@ _HAS_PLAN=$([ -f ".prism/MASTER_PLAN.md" ] && echo "true" || echo "false")
 _HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
 _PLAN_GATE=$(grep -c '\[x\] plan-approved' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
 echo "BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE | PLAN_GATE: $_PLAN_GATE"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "ceo-review"
 ```
 
 ### Gate Check

@@ -19,6 +19,7 @@ _GSD_BYPASS=$(grep -c 'GSD_BYPASS' .prism/GATE_STATUS.md 2>/dev/null || echo "0"
 echo "BRANCH: $_BRANCH | VERSION: $_HAS_VERSION | CHANGELOG: $_HAS_CHANGELOG | GH_CLI: $_HAS_GH"
 echo "GATE: $_HAS_GATE | ENG_GATE: $_ENG_GATE | GSD: $_GSD_BYPASS"
 [ -n "$_HAS_TESTS" ] && echo "TEST_CONFIG: $_HAS_TESTS" || echo "TEST_CONFIG: none detected"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "ship"
 ```
 
 ### Gate Check

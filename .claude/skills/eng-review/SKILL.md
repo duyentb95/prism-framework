@@ -13,6 +13,7 @@ _HAS_PLAN=$([ -f ".prism/MASTER_PLAN.md" ] && echo "true" || echo "false")
 _HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
 _CEO_GATE=$(grep -c '\[x\] ceo-locked' .prism/GATE_STATUS.md 2>/dev/null || echo "0")
 echo "BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE | CEO_GATE: $_CEO_GATE"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "eng-review"
 ```
 
 If `_HAS_PLAN` is false, warn: "No MASTER_PLAN.md found. Run /plan first or point me to the plan file."

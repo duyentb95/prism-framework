@@ -13,6 +13,7 @@ _LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "no tags")
 _DIFF_STAT=$(git diff HEAD~5 --stat 2>/dev/null | tail -3)
 echo "BRANCH: $_BRANCH | LAST_TAG: $_LAST_TAG"
 echo "$_DIFF_STAT"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "document-release"
 ```
 
 ## Step 0: Detect base branch

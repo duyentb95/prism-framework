@@ -14,6 +14,7 @@ _HAS_GATE=$([ -f ".prism/GATE_STATUS.md" ] && echo "true" || echo "false")
 _HAS_CEO=$([ -f ".claude/skills/ceo-review/SKILL.md" ] && echo "true" || echo "false")
 _HAS_ENG=$([ -f ".claude/skills/eng-review/SKILL.md" ] && echo "true" || echo "false")
 echo "BRANCH: $_BRANCH | PLAN: $_HAS_PLAN | GATE: $_HAS_GATE | CEO_SKILL: $_HAS_CEO | ENG_SKILL: $_HAS_ENG"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "autoplan"
 ```
 
 If `_HAS_CEO` or `_HAS_ENG` is false: BLOCKED — required skill files missing.

@@ -10,6 +10,7 @@ tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 ```bash
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "code-review"
 ```
 
 ---

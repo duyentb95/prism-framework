@@ -12,6 +12,7 @@ _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 _LAST_COMMIT=$(git log --oneline -1 2>/dev/null || echo "no commits")
 _DIRTY=$(git diff --stat 2>/dev/null | tail -1)
 echo "BRANCH: $_BRANCH | LAST: $_LAST_COMMIT | DIRTY: $_DIRTY"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "investigate"
 ```
 
 # Systematic Debugging

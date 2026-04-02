@@ -16,6 +16,7 @@ if [ -f "$_LEARN_FILE" ]; then
 fi
 _HAS_KNOWLEDGE=$([ -d ".prism/knowledge" ] && echo "true" || echo "false")
 echo "BRANCH: $_BRANCH | LEARNINGS: $_LEARN_COUNT | KNOWLEDGE_DIR: $_HAS_KNOWLEDGE"
+source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "learn"
 ```
 
 ---
