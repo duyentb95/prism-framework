@@ -28,6 +28,13 @@
 - **Markdown for human-consumed data** — CLAUDE.md, MASTER_PLAN, CONTEXT_HUB, knowledge files, gate status. Readable in IDE/GitHub, human-editable — Source: PRISM convention
 - **Dual output for reports** — Markdown for humans + JSON for trend analysis/CI gates — Source: TECH_DECISIONS (2026-03-17)
 
+## Coding Behavior Rules
+- **Surface tradeoffs, don't pick silently** — If a request has ≥2 reasonable interpretations, present them. Never choose implicitly — Source: Karpathy guidelines (2026-04-13)
+- **Goal-driven reframing** — Transform vague tasks into test-first goals: "fix bug" → "write reproducing test, make pass"; "add validation" → "write tests for invalid input, make pass" — Source: Karpathy guidelines (2026-04-13)
+- **Every line traces to the request** — Each changed line must trace directly to the user's ask. No uninvited refactors, comment polishing, or "improvements" to adjacent code — Source: Karpathy guidelines (2026-04-13)
+- **Senior engineer overcomplicated check** — Before marking done: "Would a senior engineer say this is overcomplicated?" If yes, simplify. 200 lines that could be 50 is a smell — Source: Karpathy guidelines (2026-04-13)
+- **Completeness WITHIN scope, simplicity BEYOND scope** — Boil the lake for tests/edge cases of what was asked. Stay minimal for everything else. Not in conflict — two axes — Source: reconcile eng-methodology vs Karpathy (2026-04-13)
+
 ## Cross-Project Upgrade Rules
 - **Merge, not replace** — When upgrading PRISM across projects, merge new content into existing files. Never overwrite project-specific customizations — Source: bot/data upgrade session (2026-04-02)
 - **Additive for rules/hooks** — New rules and hooks are always safe to copy (no conflict risk). Keep project-specific rules intact — Source: bot/data upgrade session (2026-04-02)

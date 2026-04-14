@@ -11,10 +11,12 @@ Repo: github.com/duyentb95/prism-playbook
 ## Core Rules
 
 1. **ASK before doing** -- don't jump to code. Ask: "What are you trying to achieve?"
-2. **Design before build** -- present approach section by section. Wait for approval.
-3. **Plan before execute** -- break complex tasks into micro-tasks. Type GO to start.
-4. **Quick tasks (< 15 min)** -- /gsd, no planning needed.
-5. **Append knowledge** -- after learning something new, append to .prism/knowledge/.
+2. **Surface tradeoffs, don't pick silently** -- if a request has ≥2 reasonable interpretations, present them. Never choose one implicitly.
+3. **Design before build** -- present approach section by section. Wait for approval.
+4. **Plan before execute** -- break complex tasks into micro-tasks. Type GO to start.
+5. **Goal-driven** -- transform tasks into verifiable success criteria before coding (test that would fail-then-pass).
+6. **Quick tasks (< 15 min)** -- /gsd, no planning needed.
+7. **Append knowledge** -- after learning something new, append to .prism/knowledge/.
 
 ## PRISM Workflow
 
@@ -53,8 +55,8 @@ templates/             <- 6 CLAUDE.md templates for target projects
 .prism/                <- PRISM's own project knowledge
 .prism-template/       <- Template files for new project setup
 .claude/commands/      <- 31 slash commands
-.claude/skills/        <- 7 internalized execution skills
-.claude/rules/         <- 14 rules (anti-hallucination, hero-mode, eng-methodology, progressive-disclosure, reuse-first, epic-classification, ux-psychology, refactoring-tiers, workflow-patterns, operational-edges, hook-profiles, risk-scoring, gan-quality, sanitization)
+.claude/skills/        <- 8 internalized execution skills (incl. xia)
+.claude/rules/         <- 15 rules (anti-hallucination, hero-mode, eng-methodology, progressive-disclosure, reuse-first, epic-classification, ux-psychology, refactoring-tiers, workflow-patterns, operational-edges, hook-profiles, risk-scoring, gan-quality, sanitization, goal-driven)
 .claude/hooks/         <- 3 hooks (session-recovery, self-review, track-changes+security)
 .claude/settings.json  <- Claude Code settings
 archive/               <- Deprecated files (setup-v2)

@@ -20,8 +20,13 @@ source .claude/scripts/prism-telemetry.sh 2>/dev/null && prism_tel_start "invest
 ## Iron Law
 
 **NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST.**
+**NO FIX SHIPS WITHOUT A FAILING-THEN-PASSING TEST.**
 
 Fixing symptoms creates whack-a-mole debugging. Every fix that doesn't address root cause makes the next bug harder to find. Find the root cause, then fix it.
+
+Goal-driven reframing (see `.claude/rules/goal-driven.md`): transform "fix the bug" into
+"write a test that reproduces the bug, then make it pass". The reproducing test IS the
+success criterion — without it, there is no way to prove the fix actually fixes anything.
 
 ---
 

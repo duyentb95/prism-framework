@@ -7,7 +7,10 @@ set -euo pipefail
 
 PROGRESS_FILE=".prism/PROGRESS.md"
 
-# Only run if PROGRESS.md exists
+# Token budget check runs unconditionally (prints nothing unless bloat detected)
+bash .claude/scripts/token-budget-check.sh 2>/dev/null || true
+
+# Only run the progress recovery part below if PROGRESS.md exists
 if [ ! -f "$PROGRESS_FILE" ]; then
   exit 0
 fi

@@ -6,8 +6,12 @@
   "hooks": {
     "UserPromptSubmit": [
       {
-        "type": "command",
-        "command": "bash .claude/hooks/session-recovery.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-recovery.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -23,8 +27,12 @@
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "bash .claude/hooks/self-review.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/self-review.sh"
+          }
+        ]
       }
     ]
   }

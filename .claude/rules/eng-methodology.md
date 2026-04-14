@@ -15,6 +15,21 @@ is a shortcut (80% coverage, happy path only), **always choose Option A**.
 
 **Exception:** Prototypes and spikes are explicitly incomplete. Label them as such.
 
+### Scope Boundary — Completeness vs Simplicity
+
+Completeness and simplicity are NOT in conflict — they apply to different axes:
+
+- **Completeness applies WITHIN requested scope:** tests, edge cases, error paths, accessibility,
+  docs for what was asked. Don't ship happy-path-only.
+- **Simplicity applies BEYOND requested scope:** no speculative features, no single-use abstractions,
+  no "flexibility" that wasn't requested, no uninvited refactors of adjacent code.
+
+The test for every line of code: *does this trace directly to the user's request (or to completing
+it properly)?* If no → cut it. If yes → keep it even if it doubles the line count.
+
+Anti-pattern: Treating "boil the lake" as a license to bloat. 200 lines that could be 50 and still
+cover every edge case is NOT more complete — it's just bigger.
+
 ## Effort Compression Quotes
 
 When presenting options to the user, **always show both human and CC effort estimates**:

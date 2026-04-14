@@ -4,6 +4,11 @@ Topic: $ARGUMENTS
 
 Follow the PRISM planning flow from CLAUDE.md:
 
+0. **Research gate (stale-knowledge check)**: Does this topic touch an external library, API,
+   framework, or service whose behavior may have changed since May 2025 (training cutoff)?
+   If YES → WebFetch the current docs for the specific API/version being used, note deltas,
+   THEN proceed. If NO (pure internal refactor, project-local logic) → skip to step 1.
+   Do NOT silently assume training-cutoff knowledge is current for external deps.
 1. **Brainstorm** (Socratic): Ask 2-4 clarifying questions about WHY/WHO/WHAT
 2. **CEO Review**: "Are we building the right thing?" — reframe problem, find 10-star version, scope back
 3. **Eng Review**: Architecture diagram, data flow, failure modes, edge cases, test matrix
@@ -13,6 +18,7 @@ Follow the PRISM planning flow from CLAUDE.md:
 7. On confirm → write tasks to `.prism/tasks/` and update MASTER_PLAN.md
 
 Shortcuts:
+- If user said `--skip-research` → skip step 0 (trust training knowledge)
 - If user said `--skip-brainstorm` → skip questions, go straight to design
 - If user said `--skip-ceo` → skip CEO review
 - If user said `--eng-only` → only do Eng review + plan
